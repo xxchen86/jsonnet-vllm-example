@@ -1,0 +1,11 @@
+{
+  "app": "demo-api",
+  "env": "dev",
+  "region": "cn-north-1",
+  "replicas": 1,
+  "tag": "dev",
+  "features": {
+    "newUI": false,
+    "debug": true
+  }
+}

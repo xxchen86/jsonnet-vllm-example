@@ -1,0 +1,5 @@
+{
+  "region": "cn-north-1",
+  "zones": ["a", "b", "c"],
+  "replicas": 3
+}

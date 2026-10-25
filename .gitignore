@@ -1,0 +1,10 @@
+# Python virtualenv
+.venv/
+__pycache__/
+*.pyc
+
+# Generated Jsonnet output
+examples/capabilities/out*/
+
+# Local Claude Code settings
+.claude/settings.local.json
