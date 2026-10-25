@@ -1,0 +1,14 @@
+{
+  "scenario": "单机 8×H200：TP8，开启 DSpark 投机、thinking、tool calling",
+  "nodes": 1,
+  "gpusPerNode": 8,
+  "gpuMemoryGiB": 141,
+  "modelHostPath": "/models/DeepSeek-V4.1-Flash",
+  "modelPath": "/models/DeepSeek-V4.1-Flash",
+  "parallelMode": "auto",
+  "speculative": true,
+  "thinking": true,
+  "reasoningEffort": 50,
+  "toolCalling": true,
+  "multimodal": false
+}

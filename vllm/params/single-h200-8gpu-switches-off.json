@@ -1,0 +1,13 @@
+{
+  "scenario": "单机 8×H200：关闭投机 / thinking / tool calling，开启多模态输入",
+  "nodes": 1,
+  "gpusPerNode": 8,
+  "gpuMemoryGiB": 141,
+  "modelHostPath": "/models/DeepSeek-V4.1-Flash",
+  "modelPath": "/models/DeepSeek-V4.1-Flash",
+  "parallelMode": "auto",
+  "speculative": false,
+  "thinking": false,
+  "toolCalling": false,
+  "multimodal": true
+}

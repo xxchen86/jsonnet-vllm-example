@@ -130,3 +130,15 @@ jsonnet-lint main.jsonnet                 # 未使用变量等 lint
 | `09-k8s.jsonnet` | 综合实战：参数化 Deployment、sidecar mixin、多文档 YAML |
 
 > **易错点**：`+` 在嵌套对象上不是递归深合并，右值会整体替换同名子对象；需要递归合并时用 `std.mergePatch`，或在字段上用 `+:`。
+
+## 7. vLLM 实战示例
+
+`vllm/` 下是一个完整的参数模板：用 Jsonnet 承载 DeepSeek-V4.1-Flash 的 vLLM 启动参数，支持按卡数推导 TP / PP、按机器数生成 Ray / mp 多机命令，以及 speculative / thinking / tool calling / multimodal 等开关。完整说明见 [vllm/README.md](vllm/README.md)。
+
+```powershell
+# 单机 8×H200
+jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/single-h200-8gpu.json
+
+# 2 机 × 8 卡，机内 TP8 + 机间 PP2，Ray 后端
+jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/multi-h200-2x8-ray.json
+```

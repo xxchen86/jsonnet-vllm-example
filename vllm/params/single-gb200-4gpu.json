@@ -1,0 +1,14 @@
+{
+  "scenario": "单机 GB200 NVL4：TP4，最大 reasoning effort，纯文本服务",
+  "nodes": 1,
+  "gpusPerNode": 4,
+  "gpuMemoryGiB": 192,
+  "modelHostPath": "/models/DeepSeek-V4.1-Flash",
+  "modelPath": "/models/DeepSeek-V4.1-Flash",
+  "parallelMode": "auto",
+  "speculative": true,
+  "thinking": true,
+  "reasoningEffort": 100,
+  "toolCalling": true,
+  "multimodal": false
+}

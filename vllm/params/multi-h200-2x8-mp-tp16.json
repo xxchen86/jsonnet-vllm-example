@@ -1,0 +1,18 @@
+{
+  "scenario": "2 机 × 8×H200：跨机 TP16，vLLM 原生 mp + --nnodes 后端",
+  "nodes": 2,
+  "totalGpus": 16,
+  "gpuMemoryGiB": 141,
+  "modelHostPath": "/models/DeepSeek-V4.1-Flash",
+  "modelPath": "/models/DeepSeek-V4.1-Flash",
+  "parallelMode": "tp",
+  "distributedBackend": "mp",
+  "nodeIpPattern": "10.0.0.%d",
+  "nodeIpStart": 10,
+  "masterPort": 29501,
+  "speculative": true,
+  "thinking": true,
+  "reasoningEffort": 100,
+  "toolCalling": true,
+  "multimodal": false
+}

@@ -5,6 +5,7 @@ __pycache__/
 
 # Generated Jsonnet output
 examples/capabilities/out*/
+vllm/out*/
 
 # Local Claude Code settings
 .claude/settings.local.json

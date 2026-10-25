@@ -1,0 +1,18 @@
+{
+  "scenario": "2 机 × 8×H200：机内 TP8 + 机间 PP2，Ray 后端",
+  "nodes": 2,
+  "gpusPerNode": 8,
+  "gpuMemoryGiB": 141,
+  "modelHostPath": "/models/DeepSeek-V4.1-Flash",
+  "modelPath": "/models/DeepSeek-V4.1-Flash",
+  "parallelMode": "tp-pp",
+  "distributedBackend": "ray",
+  "nodeIpPattern": "10.0.0.%d",
+  "nodeIpStart": 10,
+  "rayPort": 6379,
+  "speculative": true,
+  "thinking": true,
+  "reasoningEffort": 50,
+  "toolCalling": true,
+  "multimodal": false
+}
