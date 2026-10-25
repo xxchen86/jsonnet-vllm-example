@@ -4,12 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库定位
 
-这是一个 Jsonnet 教学/示例仓库，同时包含一个生产风格的两阶段 vLLM 启动参数生成器：
+这是一个 Jsonnet demo/教学/原型验证仓库，不是生产级部署工具。它用于验证 DeepSeek-V4.1-Flash 的 vLLM 启动参数「两阶段」工作流：
 
 - 根目录、`lib/`、`examples/`：Jsonnet 语言、标准库、模块、TLA、输出格式、K8s 清单等可运行示例；根 `README.md` 是完整教程。
 - `vllm/`：把 DeepSeek-V4.1-Flash 的 vLLM 部署参数拆成「参数生成 → CLI 渲染」两阶段；字段、产物 schema 与部署说明见 `vllm/README.md`。
 
 运行时为 go-jsonnet v0.20.0（`jsonnet` / `jsonnetfmt`），没有构建步骤，也没有包管理器。测试脚本额外依赖 `python3`（仅用于 `json.tool` 校验产物可解析）。
+
+## 工作深度（demo 级）
+
+本项目只要求 demo 级正确性：
+
+- 两阶段端到端能跑通；
+- `cli` 输出与 `vllm/tests/golden/legacy-render.json` 的命令等价；
+- README、命令、路径不失效；
+- 修复明显会破坏 demo 的 bug。
+
+不要做生产级工作：安全加固、schema 模糊测试/穷举边界、性能、可移植性、容灾/重试、完整 CI、生产级错误处理或大规模重构。不要为“更完善”引入新依赖、抽象层、配置项或测试框架；优先最小、可读的 Jsonnet 和 Linux shell。
+
+验证以 `./vllm/run-tests.sh`、`jsonnetfmt --test`、`bash -n` 为准；不要随意扩大测试范围，或做跨大量配置的等价性 sweep。不影响 demo 跑通或文档可用的问题记录为 nit，不阻塞提交。
 
 ## 常用命令
 
@@ -33,6 +46,9 @@ jsonnet vllm/render-cli.jsonnet --tla-code-file params=vllm/out/x.params.json
 # 格式化检查 / 自动修复（未格式化时 --test 退出码为 2）
 jsonnetfmt --test vllm/*.jsonnet vllm/lib/*.libsonnet
 jsonnetfmt --in-place vllm/lib/params.libsonnet
+
+# shell 语法检查
+bash -n vllm/render-params.sh vllm/render-cli.sh vllm/run-tests.sh
 
 # 基础示例
 jsonnet main.jsonnet

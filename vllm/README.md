@@ -462,6 +462,8 @@ print(resp.choices[0].message.content)
 
 ## 校验与测试
 
+> **范围**：本项目是 demo/原型验证，不是生产级部署工具。测试只要求两阶段端到端可跑、golden 命令等价、文档/路径可用；不要扩展为安全加固、模糊测试、性能或完整 CI。验证以 `./vllm/run-tests.sh`、`jsonnetfmt --test`、`bash -n` 为准，其他问题记录为 nit 即可。
+
 ```bash
 # 阶段 1 断言（含 validate 负例）
 jsonnet vllm/params-tests.jsonnet
@@ -480,6 +482,9 @@ jsonnetfmt --test \
   vllm/generate-params.jsonnet vllm/render-cli.jsonnet \
   vllm/lib/params.libsonnet vllm/lib/cli.libsonnet vllm/lib/parallel.libsonnet \
   vllm/params-tests.jsonnet vllm/cli-tests.jsonnet vllm/golden-tests.jsonnet
+
+# shell 语法检查
+bash -n vllm/render-params.sh vllm/render-cli.sh vllm/run-tests.sh
 ```
 
 `vllm/tests/golden/legacy-render.json` 是改造前用旧 `main.jsonnet` 生成的 5 场景基线，用于确保新流程的 `cli.serve`、`cli.deployment`、`warnings` 与原命令文本完全一致。只有确认要改变命令行为时才更新该 fixture。
