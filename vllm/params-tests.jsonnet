@@ -1,7 +1,11 @@
 // 阶段 1 断言测试：jsonnet vllm/params-tests.jsonnet
 // 断言失败时 jsonnet 以非 0 退出。
 
-local params = import 'lib/params.libsonnet';
+local launch = import 'lib/launch.libsonnet';
+local defaultTemplate = import 'templates/deepseek-v41-flash-h200.libsonnet';
+
+local generate(config) = launch.generate(defaultTemplate, config);
+local validate(config) = launch.validate(defaultTemplate, config);
 
 local has(obj, key) = std.type(obj) == 'object' && std.objectHas(obj, key);
 
@@ -10,22 +14,22 @@ local hasErr(errors, needle) =
 
 local base = { nodes: 1, gpusPerNode: 8, gpuMemoryGiB: 141 };
 
-local single = params.generate(base);
-local gb200 = params.generate({ nodes: 1, gpusPerNode: 4, gpuMemoryGiB: 192 });
-local multiPp = params.generate(base { nodes: 2, parallelMode: 'tp-pp' });
-local multiTp = params.generate(base { nodes: 2, parallelMode: 'tp' });
-local multiMp = params.generate(base { nodes: 2, parallelMode: 'tp', distributedBackend: 'mp' });
-local totalGpusTp = params.generate({ nodes: 2, totalGpus: 16, parallelMode: 'tp' });
-local totalGpusPp = params.generate({ nodes: 2, totalGpus: 16 });
-local noSpec = params.generate(base { speculative: false });
-local noThink = params.generate(base { thinking: false });
-local noTool = params.generate(base { toolCalling: false });
-local mm = params.generate(base { multimodal: true });
-local threeNodes = params.generate(base { nodes: 3 });
-local lowVram = params.generate({ nodes: 1, gpusPerNode: 4, gpuMemoryGiB: 141 });
-local effortAlias = params.generate(base { reasoningEffort: 'max' });
-local effortNone = params.generate(base { reasoningEffort: 'none' });
-local withMounts = params.generate({
+local single = generate(base);
+local gb200 = generate({ nodes: 1, gpusPerNode: 4, gpuMemoryGiB: 192 });
+local multiPp = generate(base { nodes: 2, parallelMode: 'tp-pp' });
+local multiTp = generate(base { nodes: 2, parallelMode: 'tp' });
+local multiMp = generate(base { nodes: 2, parallelMode: 'tp', distributedBackend: 'mp' });
+local totalGpusTp = generate({ nodes: 2, totalGpus: 16, parallelMode: 'tp' });
+local totalGpusPp = generate({ nodes: 2, totalGpus: 16 });
+local noSpec = generate(base { speculative: false });
+local noThink = generate(base { thinking: false });
+local noTool = generate(base { toolCalling: false });
+local mm = generate(base { multimodal: true });
+local threeNodes = generate(base { nodes: 3 });
+local lowVram = generate({ nodes: 1, gpusPerNode: 4, gpuMemoryGiB: 141 });
+local effortAlias = generate(base { reasoningEffort: 'max' });
+local effortNone = generate(base { reasoningEffort: 'none' });
+local withMounts = generate({
   nodes: 1,
   gpusPerNode: 8,
   modelHostPath: '/host/models/DeepSeek-V4.1-Flash',
@@ -34,12 +38,12 @@ local withMounts = params.generate({
   extraMounts: [{ hostPath: '/host/data', containerPath: '/data' }],
 });
 
-local badTp = params.validate(base { nodes: 2, tensorParallel: 5 });
-local badTotal = params.validate({ nodes: 2, totalGpus: 15 });
-local badEffort = params.validate(base { reasoningEffort: 'ultra' });
-local badIps = params.validate(base { nodes: 2, nodeIps: ['10.0.0.10'] });
-local badMount = params.validate({ modelHostPath: '/host/models' });
-local badExtra = params.validate(base { extraArgs: ['ok', 1] });
+local badTp = validate(base { nodes: 2, tensorParallel: 5 });
+local badTotal = validate({ nodes: 2, totalGpus: 15 });
+local badEffort = validate(base { reasoningEffort: 'ultra' });
+local badIps = validate(base { nodes: 2, nodeIps: ['10.0.0.10'] });
+local badMount = validate({ modelHostPath: '/host/models' });
+local badExtra = validate(base { extraArgs: ['ok', 1] });
 
 {
   // 产物 schema：只有 vLLM 原生分区，没有旧的内部结构 / 渲染结果

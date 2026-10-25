@@ -1,6 +1,6 @@
 // DeepSeek-V4.1-Flash CLI 渲染器：vLLM 原生参数产物 -> argv / shell / Docker / Ray / mp 命令。
 //
-// 本模块只消费 vllm-params/v1 产物，不 import params.libsonnet / parallel.libsonnet，
+// 本模块只消费 vllm-params/v1 产物，不 import 阶段 1 的 launch / launch-helpers，
 // 不做默认值、合并或 TP/PP 推导。参数产物缺失必填字段时直接报错。
 
 local paramsApiVersion = 'vllm-params/v1';

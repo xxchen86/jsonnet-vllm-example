@@ -4,8 +4,11 @@
 // 这里对比新两阶段流程的 CLI 投影与旧输出，确保命令文本完全一致。
 
 local cli = import 'lib/cli.libsonnet';
-local params = import 'lib/params.libsonnet';
+local launch = import 'lib/launch.libsonnet';
+local defaultTemplate = import 'templates/deepseek-v41-flash-h200.libsonnet';
 local golden = import 'tests/golden/legacy-render.json';
+
+local generate(config) = launch.generate(defaultTemplate, config);
 
 local scenarios = {
   'multi-h200-2x8-mp-tp16': import 'params/multi-h200-2x8-mp-tp16.json',
@@ -19,7 +22,7 @@ local names = std.objectFields(scenarios);
 
 local results = {
   [name]:
-    local p = params.generate(scenarios[name]);
+    local p = generate(scenarios[name]);
     local c = cli.render(p);
     local old = golden[name];
     {

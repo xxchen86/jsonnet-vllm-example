@@ -2,7 +2,10 @@
 // 断言失败时 jsonnet 以非 0 退出。
 
 local cli = import 'lib/cli.libsonnet';
-local params = import 'lib/params.libsonnet';
+local launch = import 'lib/launch.libsonnet';
+local defaultTemplate = import 'templates/deepseek-v41-flash-h200.libsonnet';
+
+local generate(config) = launch.generate(defaultTemplate, config);
 
 local has(obj, key) = std.type(obj) == 'object' && std.objectHas(obj, key);
 local hasArg(argv, name) = std.length(std.find(name, argv)) > 0;
@@ -23,48 +26,48 @@ local hasErr(errors, needle) =
 
 local base = { nodes: 1, gpusPerNode: 8, gpuMemoryGiB: 141 };
 
-local singleParams = params.generate(base);
+local singleParams = generate(base);
 local single = cli.render(singleParams);
-local gb200 = cli.render(params.generate({ nodes: 1, gpusPerNode: 4, gpuMemoryGiB: 192 }));
-local multiPpParams = params.generate(base { nodes: 2, parallelMode: 'tp-pp' });
+local gb200 = cli.render(generate({ nodes: 1, gpusPerNode: 4, gpuMemoryGiB: 192 }));
+local multiPpParams = generate(base { nodes: 2, parallelMode: 'tp-pp' });
 local multiPp = cli.render(multiPpParams);
-local multiTp = cli.render(params.generate(base { nodes: 2, parallelMode: 'tp' }));
-local multiMp = cli.render(params.generate(base { nodes: 2, parallelMode: 'tp', distributedBackend: 'mp' }));
-local noSpec = cli.render(params.generate(base { speculative: false }));
-local noThink = cli.render(params.generate(base { thinking: false }));
-local noTool = cli.render(params.generate(base { toolCalling: false }));
-local mm = cli.render(params.generate(base { multimodal: true }));
-local effortAlias = cli.render(params.generate(base { reasoningEffort: 'max' }));
-local effortNone = cli.render(params.generate(base { reasoningEffort: 'none' }));
-local extras = cli.render(params.generate(base {
+local multiTp = cli.render(generate(base { nodes: 2, parallelMode: 'tp' }));
+local multiMp = cli.render(generate(base { nodes: 2, parallelMode: 'tp', distributedBackend: 'mp' }));
+local noSpec = cli.render(generate(base { speculative: false }));
+local noThink = cli.render(generate(base { thinking: false }));
+local noTool = cli.render(generate(base { toolCalling: false }));
+local mm = cli.render(generate(base { multimodal: true }));
+local effortAlias = cli.render(generate(base { reasoningEffort: 'max' }));
+local effortNone = cli.render(generate(base { reasoningEffort: 'none' }));
+local extras = cli.render(generate(base {
   extraArgs: ['--enable-prefix-caching'],
   extraDockerArgs: ['--ulimit', 'nofile=65535:65535'],
 }));
-local noHostNetwork = cli.render(params.generate(base { dockerNetworkHost: false }));
-local multiPpNoHost = cli.render(params.generate(base {
+local noHostNetwork = cli.render(generate(base { dockerNetworkHost: false }));
+local multiPpNoHost = cli.render(generate(base {
   nodes: 2,
   parallelMode: 'tp-pp',
   dockerNetworkHost: false,
 }));
-local multiMpNoHost = cli.render(params.generate(base {
+local multiMpNoHost = cli.render(generate(base {
   nodes: 2,
   parallelMode: 'tp',
   distributedBackend: 'mp',
   dockerNetworkHost: false,
 }));
-local options = cli.render(params.generate(base {
+local options = cli.render(generate(base {
   apiKey: 'test-key',
   maxNumSeqs: 128,
   enforceEager: true,
   disableUvicornAccessLog: false,
 }));
-local endpoint = cli.render(params.generate(base { host: '127.0.0.1', port: 9000 }));
-local withMounts = cli.render(params.generate(base {
+local endpoint = cli.render(generate(base { host: '127.0.0.1', port: 9000 }));
+local withMounts = cli.render(generate(base {
   modelHostPath: '/host/models/DeepSeek-V4.1-Flash',
   modelPath: '/models/DeepSeek-V4.1-Flash',
 }));
 
-local threeNodesParams = params.generate(base { nodes: 3 });
+local threeNodesParams = generate(base { nodes: 3 });
 local threeNodes = cli.render(threeNodesParams);
 
 local specConfig = std.parseJson(argValue(single.cli.serve.argv, '--speculative-config'));

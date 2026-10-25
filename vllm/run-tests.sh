@@ -13,6 +13,7 @@ cd -- "$REPO"
 jsonnet vllm/params-tests.jsonnet > /dev/null
 jsonnet vllm/cli-tests.jsonnet > /dev/null
 jsonnet vllm/golden-tests.jsonnet > /dev/null
+jsonnet vllm/launch-tests.jsonnet > /dev/null
 
 out_dir="vllm/out/tests"
 mkdir -p -- "$out_dir"
@@ -37,6 +38,9 @@ for scenario in vllm/params/*.json; do
   count=$((count + 1))
 done
 
+# A rendered params artifact is itself a valid low-level static template.
+jsonnet vllm/generate-params.jsonnet --tla-code-file "template=$first_params" > /dev/null
+
 # Negative checks: wrong-stage / invalid inputs must fail.
 bad_params="$out_dir/bad.params.json"
 printf '%s\n' '{"apiVersion":"vllm-params/v2"}' > "$bad_params"
@@ -59,4 +63,4 @@ fi
 
 rm -f -- "$bad_params"
 
-echo "OK: params/cli/golden tests passed; rendered $count scenarios through both stages."
+echo "OK: params/cli/golden/launch tests passed; rendered $count scenarios through both stages."

@@ -45,7 +45,8 @@ local modes = ['auto', 'tp', 'tp-pp'];
       pipelineParallel: if hasPp then config.pipelineParallel else autoPp,
     },
 
-  validate(config, p)::
+  // facts = { weightsGiB, vramFloorGiB }，由模型 profile 提供；用于显存下限 warning。
+  validate(config, p, facts)::
     local isIntAtLeast(value, min) =
       std.type(value) == 'number' && std.floor(value) == value && value >= min;
 
@@ -105,9 +106,11 @@ local modes = ['auto', 'tp', 'tp-pp'];
       (if std.type(config.nodes) == 'number' &&
           std.type(config.gpusPerNode) == 'number' &&
           std.type(config.gpuMemoryGiB) == 'number' &&
-          config.nodes * config.gpusPerNode * config.gpuMemoryGiB < 614 then
-         ['总显存约 %d GB，低于官方 614 GB 下限（511 GB 权重 × 1.2）；请确认量化 / 卸载方案' % [
+          config.nodes * config.gpusPerNode * config.gpuMemoryGiB < facts.vramFloorGiB then
+         ['总显存约 %d GB，低于官方 %d GB 下限（%d GB 权重 × 1.2）；请确认量化 / 卸载方案' % [
            config.nodes * config.gpusPerNode * config.gpuMemoryGiB,
+           facts.vramFloorGiB,
+           facts.weightsGiB,
          ]]
        else []);
 

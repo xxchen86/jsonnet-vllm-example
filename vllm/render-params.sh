@@ -6,7 +6,7 @@ usage() {
   cat <<'EOF'
 Usage: render-params.sh [-c CONFIG] [-o OUTFILE]
 
-  -c, --config   Scenario config (default: vllm/params/single-h200-8gpu.json)
+  -c, --config   Dynamic input / scenario config (default: vllm/params/single-h200-8gpu.json)
   -o, --out      Output file; omit to write to stdout
   -h, --help     Show this help
 
