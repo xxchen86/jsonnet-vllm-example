@@ -1,59 +1,51 @@
-# Jsonnet 基础环境（Windows）
+# Jsonnet 基础环境（Linux / WSL）
 
 ## 1. 已安装的运行时
 
-使用官方预编译二进制（go-jsonnet），安装位置：
+WSL / Linux 下通过发行版包管理器安装 go-jsonnet（Ubuntu / Debian）：
 
-```
-C:\Users\chen xu\AppData\Local\Programs\jsonnet\
-├── jsonnet.exe        # 求值器（核心）
-├── jsonnetfmt.exe     # 格式化
-├── jsonnet-lint.exe   # 静态检查
-└── jsonnet-deps.exe   # 依赖图（不执行代码）
-```
-
-版本：`v0.22.0`。安装目录已加入**用户级 PATH**，新开的终端直接可用：
-
-```powershell
+```bash
+sudo apt update
+sudo apt install -y jsonnet
 jsonnet --version
 ```
 
-> 若当前已打开的终端仍提示找不到命令，重开一个终端即可（PATH 变更不会影响已运行的进程）。
+当前环境使用 `jsonnet` / `jsonnetfmt` **v0.20.0**，安装位置 `/usr/bin/`。
+
+> `jsonnetfmt` 随 `jsonnet` 包一起安装；`jsonnet-deps` / `jsonnet-lint` 不在 apt 包内，如需这些工具可使用官方 release 或 `go install github.com/google/go-jsonnet/cmd/jsonnet-deps@latest`。
 
 ## 2. 目录结构
 
 ```
-Jsonnet-Test\
+jsonnet-vllm-example/
 ├── main.jsonnet              # 主示例：变量、对象继承、隐藏字段、数组推导、std 库
-├── lib\util.libsonnet        # 可复用库（import 演示）
-└── examples\
-    ├── ext-vars.jsonnet      # 外部变量 --ext-str / --ext-code
-    ├── yaml-out.jsonnet      # YAML 流式输出
-    └── capabilities\         # 按能力拆分的可运行示例集（含独立 README）
-        ├── 01-language.jsonnet
-        ├── 02-objects.jsonnet
-        ├── 03-inheritance.jsonnet
-        ├── 04-stdlib.jsonnet
-        ├── 04b-stdlib-tour.jsonnet
-        ├── 05-modules.jsonnet
-        ├── 06-extvar-tla.jsonnet
-        ├── 06b-params-file.jsonnet
-        ├── 06c-params-tla-file.jsonnet
-        ├── 06d-import-params.jsonnet
-        ├── 07-output.jsonnet
-        ├── 07b-multi.jsonnet
-        ├── 08-assertions.jsonnet
-        ├── 08b-failing.jsonnet
-        ├── 09-k8s.jsonnet
-        ├── params\
-        │   ├── dev\params.json
-        │   └── prod\params.json
-        └── lib\
+├── lib/util.libsonnet        # 可复用库（import 演示）
+├── examples/
+│   ├── ext-vars.jsonnet      # 外部变量 --ext-str / --ext-code
+│   ├── yaml-out.jsonnet      # YAML 流式输出
+│   └── capabilities/         # 按能力拆分的可运行示例集（含独立 README）
+│       ├── 01-language.jsonnet
+│       ├── ...               # 02 ~ 09 能力示例
+│       ├── params/
+│       │   ├── dev/params.json
+│       │   └── prod/params.json
+│       └── lib/
+└── vllm/                     # 两阶段 vLLM 参数模板
+    ├── generate-params.jsonnet
+    ├── render-cli.jsonnet
+    ├── lib/
+    ├── params/
+    ├── params-tests.jsonnet
+    ├── cli-tests.jsonnet
+    ├── golden-tests.jsonnet
+    ├── render-params.sh
+    ├── render-cli.sh
+    └── run-tests.sh
 ```
 
 ## 3. 常用命令
 
-```powershell
+```bash
 # 求值，输出 JSON
 jsonnet main.jsonnet
 
@@ -70,13 +62,13 @@ jsonnet -e 'function(k) { got: k }' --tla-str k=v
 # 指定 import 搜索路径（默认会搜索脚本所在目录）
 jsonnet -J lib main.jsonnet
 
-# 只看依赖，不执行代码（适合 CI 判断哪些文件受影响）
+# 只看依赖，不执行代码（适合 CI 判断哪些文件受影响；需安装 jsonnet-deps）
 jsonnet-deps main.jsonnet
 
 # 格式化 / 检查
-jsonnetfmt --in-place main.jsonnet lib\util.libsonnet
+jsonnetfmt --in-place main.jsonnet lib/util.libsonnet
 jsonnetfmt --test main.jsonnet            # 仅检查，未格式化时退出码为 2
-jsonnet-lint main.jsonnet                 # 未使用变量等 lint
+jsonnet-lint main.jsonnet                 # 未使用变量等 lint（需安装 jsonnet-lint）
 ```
 
 ## 4. 语言要点速记
@@ -109,7 +101,7 @@ jsonnet-lint main.jsonnet                 # 未使用变量等 lint
 
 ## 6. 能力示例集
 
-`examples\capabilities\` 下按主题拆分了一组可直接运行的示例，完整命令与输出见 [examples/capabilities/README.md](examples/capabilities/README.md)。
+`examples/capabilities/` 下按主题拆分了一组可直接运行的示例，完整命令与输出见 [examples/capabilities/README.md](examples/capabilities/README.md)。
 
 | 文件 | 演示的能力 |
 | --- | --- |
@@ -133,12 +125,19 @@ jsonnet-lint main.jsonnet                 # 未使用变量等 lint
 
 ## 7. vLLM 实战示例
 
-`vllm/` 下是一个完整的参数模板：用 Jsonnet 承载 DeepSeek-V4.1-Flash 的 vLLM 启动参数，支持按卡数推导 TP / PP、按机器数生成 Ray / mp 多机命令，以及 speculative / thinking / tool calling / multimodal 等开关。完整说明见 [vllm/README.md](vllm/README.md)。
+`vllm/` 下是一个完整的两阶段参数模板：阶段 1 把场景配置生成为 vLLM 原生参数产物，阶段 2 从参数产物渲染 Docker / Ray / mp 命令。支持按卡数推导 TP / PP、按机器数生成多机命令，以及 speculative / thinking / tool calling / multimodal 等开关。完整说明见 [vllm/README.md](vllm/README.md)。
 
-```powershell
-# 单机 8×H200
-jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/single-h200-8gpu.json
+```bash
+# 阶段 1：生成参数产物
+./vllm/render-params.sh \
+  -c vllm/params/single-h200-8gpu.json \
+  -o vllm/out/single-h200-8gpu.params.json
 
-# 2 机 × 8 卡，机内 TP8 + 机间 PP2，Ray 后端
-jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/multi-h200-2x8-ray.json
+# 阶段 2：渲染 CLI
+./vllm/render-cli.sh \
+  -p vllm/out/single-h200-8gpu.params.json \
+  -o vllm/out/single-h200-8gpu.cli.json
+
+# 2 机 × 8 卡，机内 TP8 + 机间 PP2，Ray 后端同理：
+# 把 -c 换成 vllm/params/multi-h200-2x8-ray.json
 ```

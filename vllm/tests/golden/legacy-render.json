@@ -1,0 +1,1237 @@
+{
+   "multi-h200-2x8-mp-tp16": {
+      "apiVersion": "vllm-recipe.jsonnet/v1",
+      "deployment": {
+         "commands": [
+            "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.10 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29501 --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'",
+            "docker run --name dsv41-node-1 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.11 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29501 --headless --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+         ],
+         "mode": "mp-multi-node",
+         "nodes": [
+            {
+               "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.10 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29501 --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'",
+               "docker": {
+                  "argv": [
+                     "docker",
+                     "run",
+                     "--name",
+                     "dsv41-node-0",
+                     "--gpus",
+                     "all",
+                     "--ipc",
+                     "host",
+                     "--shm-size",
+                     "32g",
+                     "--network",
+                     "host",
+                     "-e",
+                     "VLLM_ENGINE_READY_TIMEOUT_S=3600",
+                     "-e",
+                     "VLLM_HOST_IP=10.0.0.10",
+                     "-e",
+                     "VLLM_USE_RUST_FRONTEND=1",
+                     "-v",
+                     "/models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro",
+                     "--entrypoint",
+                     "bash",
+                     "vllm/vllm-openai:deepseekv41-flash-0909",
+                     "-c",
+                     "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29501 --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+                  ],
+                  "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.10 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29501 --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+               },
+               "env": {
+                  "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+                  "VLLM_HOST_IP": "10.0.0.10",
+                  "VLLM_USE_RUST_FRONTEND": "1"
+               },
+               "innerCommand": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29501 --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+               "ip": "10.0.0.10",
+               "rank": 0,
+               "ray": null,
+               "role": "head",
+               "serve": {
+                  "argv": [
+                     "vllm",
+                     "serve",
+                     "/models/DeepSeek-V4.1-Flash",
+                     "--served-model-name",
+                     "deepseek-ai/DeepSeek-V4.1-Flash",
+                     "--host",
+                     "0.0.0.0",
+                     "--port",
+                     "8000",
+                     "--tokenizer-mode",
+                     "deepseek_v41",
+                     "--tensor-parallel-size",
+                     "16",
+                     "--enable-expert-parallel",
+                     "--distributed-executor-backend",
+                     "mp",
+                     "--nnodes",
+                     "2",
+                     "--node-rank",
+                     "0",
+                     "--master-addr",
+                     "10.0.0.10",
+                     "--master-port",
+                     "29501",
+                     "--max-model-len",
+                     "1048576",
+                     "--max-num-batched-tokens",
+                     "16384",
+                     "--max-cudagraph-capture-size",
+                     "1024",
+                     "--gpu-memory-utilization",
+                     "0.9",
+                     "--speculative-config",
+                     "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+                     "--reasoning-parser",
+                     "deepseek_v41",
+                     "--default-chat-template-kwargs",
+                     "{\"reasoning_effort\":100,\"thinking\":true}",
+                     "--tool-call-parser",
+                     "deepseek_v41",
+                     "--enable-auto-tool-choice",
+                     "--language-model-only",
+                     "--disable-uvicorn-access-log"
+                  ],
+                  "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29501 --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+               }
+            },
+            {
+               "command": "docker run --name dsv41-node-1 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.11 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29501 --headless --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'",
+               "docker": {
+                  "argv": [
+                     "docker",
+                     "run",
+                     "--name",
+                     "dsv41-node-1",
+                     "--gpus",
+                     "all",
+                     "--ipc",
+                     "host",
+                     "--shm-size",
+                     "32g",
+                     "--network",
+                     "host",
+                     "-e",
+                     "VLLM_ENGINE_READY_TIMEOUT_S=3600",
+                     "-e",
+                     "VLLM_HOST_IP=10.0.0.11",
+                     "-e",
+                     "VLLM_USE_RUST_FRONTEND=1",
+                     "-v",
+                     "/models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro",
+                     "--entrypoint",
+                     "bash",
+                     "vllm/vllm-openai:deepseekv41-flash-0909",
+                     "-c",
+                     "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29501 --headless --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+                  ],
+                  "command": "docker run --name dsv41-node-1 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.11 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29501 --headless --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+               },
+               "env": {
+                  "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+                  "VLLM_HOST_IP": "10.0.0.11",
+                  "VLLM_USE_RUST_FRONTEND": "1"
+               },
+               "innerCommand": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29501 --headless --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+               "ip": "10.0.0.11",
+               "rank": 1,
+               "ray": null,
+               "role": "worker",
+               "serve": {
+                  "argv": [
+                     "vllm",
+                     "serve",
+                     "/models/DeepSeek-V4.1-Flash",
+                     "--served-model-name",
+                     "deepseek-ai/DeepSeek-V4.1-Flash",
+                     "--host",
+                     "0.0.0.0",
+                     "--port",
+                     "8000",
+                     "--tokenizer-mode",
+                     "deepseek_v41",
+                     "--tensor-parallel-size",
+                     "16",
+                     "--enable-expert-parallel",
+                     "--distributed-executor-backend",
+                     "mp",
+                     "--nnodes",
+                     "2",
+                     "--node-rank",
+                     "1",
+                     "--master-addr",
+                     "10.0.0.10",
+                     "--master-port",
+                     "29501",
+                     "--headless",
+                     "--max-model-len",
+                     "1048576",
+                     "--max-num-batched-tokens",
+                     "16384",
+                     "--max-cudagraph-capture-size",
+                     "1024",
+                     "--gpu-memory-utilization",
+                     "0.9",
+                     "--speculative-config",
+                     "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+                     "--reasoning-parser",
+                     "deepseek_v41",
+                     "--default-chat-template-kwargs",
+                     "{\"reasoning_effort\":100,\"thinking\":true}",
+                     "--tool-call-parser",
+                     "deepseek_v41",
+                     "--enable-auto-tool-choice",
+                     "--language-model-only",
+                     "--disable-uvicorn-access-log"
+                  ],
+                  "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 1 --master-addr 10.0.0.10 --master-port 29501 --headless --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+               }
+            }
+         ]
+      },
+      "distributed": {
+         "backend": "mp",
+         "headAddress": "10.0.0.10",
+         "masterPort": 29501,
+         "multiNode": true,
+         "nodeIps": [
+            "10.0.0.10",
+            "10.0.0.11"
+         ],
+         "rayPort": null
+      },
+      "environment": {
+         "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+         "VLLM_USE_RUST_FRONTEND": "1"
+      },
+      "features": {
+         "multimodal": {
+            "enabled": false,
+            "languageModelOnly": true,
+            "mmEncoderTpMode": null
+         },
+         "speculative": {
+            "config": {
+               "draft_sample_method": "probabilistic",
+               "enable_adaptive_verification": false,
+               "method": "dspark",
+               "num_speculative_tokens": 5,
+               "rejection_sample_method": "block"
+            },
+            "enabled": true,
+            "method": "dspark",
+            "numSpeculativeTokens": 5
+         },
+         "thinking": {
+            "defaultChatTemplateKwargs": {
+               "reasoning_effort": 100,
+               "thinking": true
+            },
+            "enabled": true,
+            "reasoningEffort": 100
+         },
+         "toolCalling": {
+            "enabled": true,
+            "parser": "deepseek_v41"
+         }
+      },
+      "input": {
+         "distributedBackend": "mp",
+         "gpusPerNode": 8,
+         "multimodal": false,
+         "nodes": 2,
+         "parallelMode": "tp",
+         "pipelineParallel": 1,
+         "reasoningEffort": 100,
+         "speculative": true,
+         "speculativeMethod": "dspark",
+         "tensorParallel": 16,
+         "thinking": true,
+         "toolCalling": true,
+         "totalGpus": 16
+      },
+      "meta": {
+         "name": "DeepSeek-V4.1-Flash vLLM launcher",
+         "notes": [
+            "TP / PP 由 nodes × gpusPerNode 推导；也可只传 totalGpus，由 nodes 推导每机卡数。",
+            "多机默认使用 Ray；distributedBackend=\"mp\" 可切换为 vLLM 原生 --nnodes 模式。",
+            "thinking 默认开启；reasoningEffort 支持 1-100、low/high/xhigh/max 或 none。"
+         ],
+         "recipe": "https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash",
+         "requires": "vLLM >= 0.31.0；镜像 vllm/vllm-openai:deepseekv41-flash-0909"
+      },
+      "parallel": {
+         "description": "TP16 × PP1（2 机 × 8 卡 = 16 卡）",
+         "expertParallel": true,
+         "gpusPerNode": 8,
+         "mode": "tp",
+         "nodes": 2,
+         "pipelineParallel": 1,
+         "tensorParallel": 16,
+         "worldSize": 16
+      },
+      "scenario": "2 机 × 8×H200：跨机 TP16，vLLM 原生 mp + --nnodes 后端",
+      "serve": {
+         "argv": [
+            "vllm",
+            "serve",
+            "/models/DeepSeek-V4.1-Flash",
+            "--served-model-name",
+            "deepseek-ai/DeepSeek-V4.1-Flash",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000",
+            "--tokenizer-mode",
+            "deepseek_v41",
+            "--tensor-parallel-size",
+            "16",
+            "--enable-expert-parallel",
+            "--distributed-executor-backend",
+            "mp",
+            "--nnodes",
+            "2",
+            "--node-rank",
+            "0",
+            "--master-addr",
+            "10.0.0.10",
+            "--master-port",
+            "29501",
+            "--max-model-len",
+            "1048576",
+            "--max-num-batched-tokens",
+            "16384",
+            "--max-cudagraph-capture-size",
+            "1024",
+            "--gpu-memory-utilization",
+            "0.9",
+            "--speculative-config",
+            "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+            "--reasoning-parser",
+            "deepseek_v41",
+            "--default-chat-template-kwargs",
+            "{\"reasoning_effort\":100,\"thinking\":true}",
+            "--tool-call-parser",
+            "deepseek_v41",
+            "--enable-auto-tool-choice",
+            "--language-model-only",
+            "--disable-uvicorn-access-log"
+         ],
+         "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 16 --enable-expert-parallel --distributed-executor-backend mp --nnodes 2 --node-rank 0 --master-addr 10.0.0.10 --master-port 29501 --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+         "model": "/models/DeepSeek-V4.1-Flash",
+         "servedModelName": "deepseek-ai/DeepSeek-V4.1-Flash"
+      },
+      "warnings": [
+         "跨机 TP 对互联带宽敏感，请确认 IB / RoCE 与 NCCL 配置"
+      ]
+   },
+   "multi-h200-2x8-ray": {
+      "apiVersion": "vllm-recipe.jsonnet/v1",
+      "deployment": {
+         "commands": [
+            "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.10 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'ray start --head --port=6379 --node-ip-address=10.0.0.10 --num-gpus=8 --disable-usage-stats && vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --pipeline-parallel-size 2 --enable-expert-parallel --distributed-executor-backend ray --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":50,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'",
+            "docker run --name dsv41-node-1 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.11 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'ray start --address=10.0.0.10:6379 --node-ip-address=10.0.0.11 --num-gpus=8 --block --disable-usage-stats'"
+         ],
+         "mode": "ray-multi-node",
+         "nodes": [
+            {
+               "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.10 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'ray start --head --port=6379 --node-ip-address=10.0.0.10 --num-gpus=8 --disable-usage-stats && vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --pipeline-parallel-size 2 --enable-expert-parallel --distributed-executor-backend ray --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":50,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'",
+               "docker": {
+                  "argv": [
+                     "docker",
+                     "run",
+                     "--name",
+                     "dsv41-node-0",
+                     "--gpus",
+                     "all",
+                     "--ipc",
+                     "host",
+                     "--shm-size",
+                     "32g",
+                     "--network",
+                     "host",
+                     "-e",
+                     "VLLM_ENGINE_READY_TIMEOUT_S=3600",
+                     "-e",
+                     "VLLM_HOST_IP=10.0.0.10",
+                     "-e",
+                     "VLLM_USE_RUST_FRONTEND=1",
+                     "-v",
+                     "/models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro",
+                     "--entrypoint",
+                     "bash",
+                     "vllm/vllm-openai:deepseekv41-flash-0909",
+                     "-c",
+                     "ray start --head --port=6379 --node-ip-address=10.0.0.10 --num-gpus=8 --disable-usage-stats && vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --pipeline-parallel-size 2 --enable-expert-parallel --distributed-executor-backend ray --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+                  ],
+                  "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.10 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'ray start --head --port=6379 --node-ip-address=10.0.0.10 --num-gpus=8 --disable-usage-stats && vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --pipeline-parallel-size 2 --enable-expert-parallel --distributed-executor-backend ray --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":50,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+               },
+               "env": {
+                  "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+                  "VLLM_HOST_IP": "10.0.0.10",
+                  "VLLM_USE_RUST_FRONTEND": "1"
+               },
+               "innerCommand": "ray start --head --port=6379 --node-ip-address=10.0.0.10 --num-gpus=8 --disable-usage-stats && vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --pipeline-parallel-size 2 --enable-expert-parallel --distributed-executor-backend ray --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+               "ip": "10.0.0.10",
+               "rank": 0,
+               "ray": {
+                  "argv": [
+                     "ray",
+                     "start",
+                     "--head",
+                     "--port=6379",
+                     "--node-ip-address=10.0.0.10",
+                     "--num-gpus=8",
+                     "--disable-usage-stats"
+                  ],
+                  "command": "ray start --head --port=6379 --node-ip-address=10.0.0.10 --num-gpus=8 --disable-usage-stats"
+               },
+               "role": "head",
+               "serve": {
+                  "argv": [
+                     "vllm",
+                     "serve",
+                     "/models/DeepSeek-V4.1-Flash",
+                     "--served-model-name",
+                     "deepseek-ai/DeepSeek-V4.1-Flash",
+                     "--host",
+                     "0.0.0.0",
+                     "--port",
+                     "8000",
+                     "--tokenizer-mode",
+                     "deepseek_v41",
+                     "--tensor-parallel-size",
+                     "8",
+                     "--pipeline-parallel-size",
+                     "2",
+                     "--enable-expert-parallel",
+                     "--distributed-executor-backend",
+                     "ray",
+                     "--max-model-len",
+                     "1048576",
+                     "--max-num-batched-tokens",
+                     "16384",
+                     "--max-cudagraph-capture-size",
+                     "1024",
+                     "--gpu-memory-utilization",
+                     "0.9",
+                     "--speculative-config",
+                     "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+                     "--reasoning-parser",
+                     "deepseek_v41",
+                     "--default-chat-template-kwargs",
+                     "{\"reasoning_effort\":50,\"thinking\":true}",
+                     "--tool-call-parser",
+                     "deepseek_v41",
+                     "--enable-auto-tool-choice",
+                     "--language-model-only",
+                     "--disable-uvicorn-access-log"
+                  ],
+                  "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --pipeline-parallel-size 2 --enable-expert-parallel --distributed-executor-backend ray --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+               }
+            },
+            {
+               "command": "docker run --name dsv41-node-1 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.11 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'ray start --address=10.0.0.10:6379 --node-ip-address=10.0.0.11 --num-gpus=8 --block --disable-usage-stats'",
+               "docker": {
+                  "argv": [
+                     "docker",
+                     "run",
+                     "--name",
+                     "dsv41-node-1",
+                     "--gpus",
+                     "all",
+                     "--ipc",
+                     "host",
+                     "--shm-size",
+                     "32g",
+                     "--network",
+                     "host",
+                     "-e",
+                     "VLLM_ENGINE_READY_TIMEOUT_S=3600",
+                     "-e",
+                     "VLLM_HOST_IP=10.0.0.11",
+                     "-e",
+                     "VLLM_USE_RUST_FRONTEND=1",
+                     "-v",
+                     "/models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro",
+                     "--entrypoint",
+                     "bash",
+                     "vllm/vllm-openai:deepseekv41-flash-0909",
+                     "-c",
+                     "ray start --address=10.0.0.10:6379 --node-ip-address=10.0.0.11 --num-gpus=8 --block --disable-usage-stats"
+                  ],
+                  "command": "docker run --name dsv41-node-1 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_HOST_IP=10.0.0.11 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'ray start --address=10.0.0.10:6379 --node-ip-address=10.0.0.11 --num-gpus=8 --block --disable-usage-stats'"
+               },
+               "env": {
+                  "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+                  "VLLM_HOST_IP": "10.0.0.11",
+                  "VLLM_USE_RUST_FRONTEND": "1"
+               },
+               "innerCommand": "ray start --address=10.0.0.10:6379 --node-ip-address=10.0.0.11 --num-gpus=8 --block --disable-usage-stats",
+               "ip": "10.0.0.11",
+               "rank": 1,
+               "ray": {
+                  "argv": [
+                     "ray",
+                     "start",
+                     "--address=10.0.0.10:6379",
+                     "--node-ip-address=10.0.0.11",
+                     "--num-gpus=8",
+                     "--block",
+                     "--disable-usage-stats"
+                  ],
+                  "command": "ray start --address=10.0.0.10:6379 --node-ip-address=10.0.0.11 --num-gpus=8 --block --disable-usage-stats"
+               },
+               "role": "worker",
+               "serve": null
+            }
+         ]
+      },
+      "distributed": {
+         "backend": "ray",
+         "headAddress": "10.0.0.10",
+         "masterPort": null,
+         "multiNode": true,
+         "nodeIps": [
+            "10.0.0.10",
+            "10.0.0.11"
+         ],
+         "rayPort": 6379
+      },
+      "environment": {
+         "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+         "VLLM_USE_RUST_FRONTEND": "1"
+      },
+      "features": {
+         "multimodal": {
+            "enabled": false,
+            "languageModelOnly": true,
+            "mmEncoderTpMode": null
+         },
+         "speculative": {
+            "config": {
+               "draft_sample_method": "probabilistic",
+               "enable_adaptive_verification": false,
+               "method": "dspark",
+               "num_speculative_tokens": 5,
+               "rejection_sample_method": "block"
+            },
+            "enabled": true,
+            "method": "dspark",
+            "numSpeculativeTokens": 5
+         },
+         "thinking": {
+            "defaultChatTemplateKwargs": {
+               "reasoning_effort": 50,
+               "thinking": true
+            },
+            "enabled": true,
+            "reasoningEffort": 50
+         },
+         "toolCalling": {
+            "enabled": true,
+            "parser": "deepseek_v41"
+         }
+      },
+      "input": {
+         "distributedBackend": "ray",
+         "gpusPerNode": 8,
+         "multimodal": false,
+         "nodes": 2,
+         "parallelMode": "tp-pp",
+         "pipelineParallel": 2,
+         "reasoningEffort": 50,
+         "speculative": true,
+         "speculativeMethod": "dspark",
+         "tensorParallel": 8,
+         "thinking": true,
+         "toolCalling": true,
+         "totalGpus": null
+      },
+      "meta": {
+         "name": "DeepSeek-V4.1-Flash vLLM launcher",
+         "notes": [
+            "TP / PP 由 nodes × gpusPerNode 推导；也可只传 totalGpus，由 nodes 推导每机卡数。",
+            "多机默认使用 Ray；distributedBackend=\"mp\" 可切换为 vLLM 原生 --nnodes 模式。",
+            "thinking 默认开启；reasoningEffort 支持 1-100、low/high/xhigh/max 或 none。"
+         ],
+         "recipe": "https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash",
+         "requires": "vLLM >= 0.31.0；镜像 vllm/vllm-openai:deepseekv41-flash-0909"
+      },
+      "parallel": {
+         "description": "TP8 × PP2（2 机 × 8 卡 = 16 卡）",
+         "expertParallel": true,
+         "gpusPerNode": 8,
+         "mode": "tp-pp",
+         "nodes": 2,
+         "pipelineParallel": 2,
+         "tensorParallel": 8,
+         "worldSize": 16
+      },
+      "scenario": "2 机 × 8×H200：机内 TP8 + 机间 PP2，Ray 后端",
+      "serve": {
+         "argv": [
+            "vllm",
+            "serve",
+            "/models/DeepSeek-V4.1-Flash",
+            "--served-model-name",
+            "deepseek-ai/DeepSeek-V4.1-Flash",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000",
+            "--tokenizer-mode",
+            "deepseek_v41",
+            "--tensor-parallel-size",
+            "8",
+            "--pipeline-parallel-size",
+            "2",
+            "--enable-expert-parallel",
+            "--distributed-executor-backend",
+            "ray",
+            "--max-model-len",
+            "1048576",
+            "--max-num-batched-tokens",
+            "16384",
+            "--max-cudagraph-capture-size",
+            "1024",
+            "--gpu-memory-utilization",
+            "0.9",
+            "--speculative-config",
+            "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+            "--reasoning-parser",
+            "deepseek_v41",
+            "--default-chat-template-kwargs",
+            "{\"reasoning_effort\":50,\"thinking\":true}",
+            "--tool-call-parser",
+            "deepseek_v41",
+            "--enable-auto-tool-choice",
+            "--language-model-only",
+            "--disable-uvicorn-access-log"
+         ],
+         "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --pipeline-parallel-size 2 --enable-expert-parallel --distributed-executor-backend ray --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+         "model": "/models/DeepSeek-V4.1-Flash",
+         "servedModelName": "deepseek-ai/DeepSeek-V4.1-Flash"
+      },
+      "warnings": []
+   },
+   "single-gb200-4gpu": {
+      "apiVersion": "vllm-recipe.jsonnet/v1",
+      "deployment": {
+         "commands": [
+            "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 4 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+         ],
+         "mode": "single-node",
+         "nodes": [
+            {
+               "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 4 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'",
+               "docker": {
+                  "argv": [
+                     "docker",
+                     "run",
+                     "--name",
+                     "dsv41-node-0",
+                     "--gpus",
+                     "all",
+                     "--ipc",
+                     "host",
+                     "--shm-size",
+                     "32g",
+                     "--network",
+                     "host",
+                     "-e",
+                     "VLLM_ENGINE_READY_TIMEOUT_S=3600",
+                     "-e",
+                     "VLLM_USE_RUST_FRONTEND=1",
+                     "-v",
+                     "/models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro",
+                     "--entrypoint",
+                     "bash",
+                     "vllm/vllm-openai:deepseekv41-flash-0909",
+                     "-c",
+                     "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 4 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+                  ],
+                  "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 4 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":100,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+               },
+               "env": {
+                  "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+                  "VLLM_USE_RUST_FRONTEND": "1"
+               },
+               "innerCommand": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 4 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+               "ip": "10.0.0.10",
+               "rank": 0,
+               "ray": null,
+               "role": "server",
+               "serve": {
+                  "argv": [
+                     "vllm",
+                     "serve",
+                     "/models/DeepSeek-V4.1-Flash",
+                     "--served-model-name",
+                     "deepseek-ai/DeepSeek-V4.1-Flash",
+                     "--host",
+                     "0.0.0.0",
+                     "--port",
+                     "8000",
+                     "--tokenizer-mode",
+                     "deepseek_v41",
+                     "--tensor-parallel-size",
+                     "4",
+                     "--enable-expert-parallel",
+                     "--max-model-len",
+                     "1048576",
+                     "--max-num-batched-tokens",
+                     "16384",
+                     "--max-cudagraph-capture-size",
+                     "1024",
+                     "--gpu-memory-utilization",
+                     "0.9",
+                     "--speculative-config",
+                     "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+                     "--reasoning-parser",
+                     "deepseek_v41",
+                     "--default-chat-template-kwargs",
+                     "{\"reasoning_effort\":100,\"thinking\":true}",
+                     "--tool-call-parser",
+                     "deepseek_v41",
+                     "--enable-auto-tool-choice",
+                     "--language-model-only",
+                     "--disable-uvicorn-access-log"
+                  ],
+                  "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 4 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+               }
+            }
+         ]
+      },
+      "distributed": {
+         "backend": "local",
+         "headAddress": null,
+         "masterPort": null,
+         "multiNode": false,
+         "nodeIps": [
+            "10.0.0.10"
+         ],
+         "rayPort": null
+      },
+      "environment": {
+         "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+         "VLLM_USE_RUST_FRONTEND": "1"
+      },
+      "features": {
+         "multimodal": {
+            "enabled": false,
+            "languageModelOnly": true,
+            "mmEncoderTpMode": null
+         },
+         "speculative": {
+            "config": {
+               "draft_sample_method": "probabilistic",
+               "enable_adaptive_verification": false,
+               "method": "dspark",
+               "num_speculative_tokens": 5,
+               "rejection_sample_method": "block"
+            },
+            "enabled": true,
+            "method": "dspark",
+            "numSpeculativeTokens": 5
+         },
+         "thinking": {
+            "defaultChatTemplateKwargs": {
+               "reasoning_effort": 100,
+               "thinking": true
+            },
+            "enabled": true,
+            "reasoningEffort": 100
+         },
+         "toolCalling": {
+            "enabled": true,
+            "parser": "deepseek_v41"
+         }
+      },
+      "input": {
+         "distributedBackend": "local",
+         "gpusPerNode": 4,
+         "multimodal": false,
+         "nodes": 1,
+         "parallelMode": "auto",
+         "pipelineParallel": 1,
+         "reasoningEffort": 100,
+         "speculative": true,
+         "speculativeMethod": "dspark",
+         "tensorParallel": 4,
+         "thinking": true,
+         "toolCalling": true,
+         "totalGpus": null
+      },
+      "meta": {
+         "name": "DeepSeek-V4.1-Flash vLLM launcher",
+         "notes": [
+            "TP / PP 由 nodes × gpusPerNode 推导；也可只传 totalGpus，由 nodes 推导每机卡数。",
+            "多机默认使用 Ray；distributedBackend=\"mp\" 可切换为 vLLM 原生 --nnodes 模式。",
+            "thinking 默认开启；reasoningEffort 支持 1-100、low/high/xhigh/max 或 none。"
+         ],
+         "recipe": "https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash",
+         "requires": "vLLM >= 0.31.0；镜像 vllm/vllm-openai:deepseekv41-flash-0909"
+      },
+      "parallel": {
+         "description": "TP4 × PP1（1 机 × 4 卡 = 4 卡）",
+         "expertParallel": true,
+         "gpusPerNode": 4,
+         "mode": "auto",
+         "nodes": 1,
+         "pipelineParallel": 1,
+         "tensorParallel": 4,
+         "worldSize": 4
+      },
+      "scenario": "单机 GB200 NVL4：TP4，最大 reasoning effort，纯文本服务",
+      "serve": {
+         "argv": [
+            "vllm",
+            "serve",
+            "/models/DeepSeek-V4.1-Flash",
+            "--served-model-name",
+            "deepseek-ai/DeepSeek-V4.1-Flash",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000",
+            "--tokenizer-mode",
+            "deepseek_v41",
+            "--tensor-parallel-size",
+            "4",
+            "--enable-expert-parallel",
+            "--max-model-len",
+            "1048576",
+            "--max-num-batched-tokens",
+            "16384",
+            "--max-cudagraph-capture-size",
+            "1024",
+            "--gpu-memory-utilization",
+            "0.9",
+            "--speculative-config",
+            "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+            "--reasoning-parser",
+            "deepseek_v41",
+            "--default-chat-template-kwargs",
+            "{\"reasoning_effort\":100,\"thinking\":true}",
+            "--tool-call-parser",
+            "deepseek_v41",
+            "--enable-auto-tool-choice",
+            "--language-model-only",
+            "--disable-uvicorn-access-log"
+         ],
+         "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 4 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":100,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+         "model": "/models/DeepSeek-V4.1-Flash",
+         "servedModelName": "deepseek-ai/DeepSeek-V4.1-Flash"
+      },
+      "warnings": []
+   },
+   "single-h200-8gpu": {
+      "apiVersion": "vllm-recipe.jsonnet/v1",
+      "deployment": {
+         "commands": [
+            "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":50,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+         ],
+         "mode": "single-node",
+         "nodes": [
+            {
+               "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":50,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'",
+               "docker": {
+                  "argv": [
+                     "docker",
+                     "run",
+                     "--name",
+                     "dsv41-node-0",
+                     "--gpus",
+                     "all",
+                     "--ipc",
+                     "host",
+                     "--shm-size",
+                     "32g",
+                     "--network",
+                     "host",
+                     "-e",
+                     "VLLM_ENGINE_READY_TIMEOUT_S=3600",
+                     "-e",
+                     "VLLM_USE_RUST_FRONTEND=1",
+                     "-v",
+                     "/models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro",
+                     "--entrypoint",
+                     "bash",
+                     "vllm/vllm-openai:deepseekv41-flash-0909",
+                     "-c",
+                     "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+                  ],
+                  "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '\\''{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}'\\'' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '\\''{\"reasoning_effort\":50,\"thinking\":true}'\\'' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log'"
+               },
+               "env": {
+                  "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+                  "VLLM_USE_RUST_FRONTEND": "1"
+               },
+               "innerCommand": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+               "ip": "10.0.0.10",
+               "rank": 0,
+               "ray": null,
+               "role": "server",
+               "serve": {
+                  "argv": [
+                     "vllm",
+                     "serve",
+                     "/models/DeepSeek-V4.1-Flash",
+                     "--served-model-name",
+                     "deepseek-ai/DeepSeek-V4.1-Flash",
+                     "--host",
+                     "0.0.0.0",
+                     "--port",
+                     "8000",
+                     "--tokenizer-mode",
+                     "deepseek_v41",
+                     "--tensor-parallel-size",
+                     "8",
+                     "--enable-expert-parallel",
+                     "--max-model-len",
+                     "1048576",
+                     "--max-num-batched-tokens",
+                     "16384",
+                     "--max-cudagraph-capture-size",
+                     "1024",
+                     "--gpu-memory-utilization",
+                     "0.9",
+                     "--speculative-config",
+                     "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+                     "--reasoning-parser",
+                     "deepseek_v41",
+                     "--default-chat-template-kwargs",
+                     "{\"reasoning_effort\":50,\"thinking\":true}",
+                     "--tool-call-parser",
+                     "deepseek_v41",
+                     "--enable-auto-tool-choice",
+                     "--language-model-only",
+                     "--disable-uvicorn-access-log"
+                  ],
+                  "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log"
+               }
+            }
+         ]
+      },
+      "distributed": {
+         "backend": "local",
+         "headAddress": null,
+         "masterPort": null,
+         "multiNode": false,
+         "nodeIps": [
+            "10.0.0.10"
+         ],
+         "rayPort": null
+      },
+      "environment": {
+         "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+         "VLLM_USE_RUST_FRONTEND": "1"
+      },
+      "features": {
+         "multimodal": {
+            "enabled": false,
+            "languageModelOnly": true,
+            "mmEncoderTpMode": null
+         },
+         "speculative": {
+            "config": {
+               "draft_sample_method": "probabilistic",
+               "enable_adaptive_verification": false,
+               "method": "dspark",
+               "num_speculative_tokens": 5,
+               "rejection_sample_method": "block"
+            },
+            "enabled": true,
+            "method": "dspark",
+            "numSpeculativeTokens": 5
+         },
+         "thinking": {
+            "defaultChatTemplateKwargs": {
+               "reasoning_effort": 50,
+               "thinking": true
+            },
+            "enabled": true,
+            "reasoningEffort": 50
+         },
+         "toolCalling": {
+            "enabled": true,
+            "parser": "deepseek_v41"
+         }
+      },
+      "input": {
+         "distributedBackend": "local",
+         "gpusPerNode": 8,
+         "multimodal": false,
+         "nodes": 1,
+         "parallelMode": "auto",
+         "pipelineParallel": 1,
+         "reasoningEffort": 50,
+         "speculative": true,
+         "speculativeMethod": "dspark",
+         "tensorParallel": 8,
+         "thinking": true,
+         "toolCalling": true,
+         "totalGpus": null
+      },
+      "meta": {
+         "name": "DeepSeek-V4.1-Flash vLLM launcher",
+         "notes": [
+            "TP / PP 由 nodes × gpusPerNode 推导；也可只传 totalGpus，由 nodes 推导每机卡数。",
+            "多机默认使用 Ray；distributedBackend=\"mp\" 可切换为 vLLM 原生 --nnodes 模式。",
+            "thinking 默认开启；reasoningEffort 支持 1-100、low/high/xhigh/max 或 none。"
+         ],
+         "recipe": "https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash",
+         "requires": "vLLM >= 0.31.0；镜像 vllm/vllm-openai:deepseekv41-flash-0909"
+      },
+      "parallel": {
+         "description": "TP8 × PP1（1 机 × 8 卡 = 8 卡）",
+         "expertParallel": true,
+         "gpusPerNode": 8,
+         "mode": "auto",
+         "nodes": 1,
+         "pipelineParallel": 1,
+         "tensorParallel": 8,
+         "worldSize": 8
+      },
+      "scenario": "单机 8×H200：TP8，开启 DSpark 投机、thinking、tool calling",
+      "serve": {
+         "argv": [
+            "vllm",
+            "serve",
+            "/models/DeepSeek-V4.1-Flash",
+            "--served-model-name",
+            "deepseek-ai/DeepSeek-V4.1-Flash",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000",
+            "--tokenizer-mode",
+            "deepseek_v41",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--max-model-len",
+            "1048576",
+            "--max-num-batched-tokens",
+            "16384",
+            "--max-cudagraph-capture-size",
+            "1024",
+            "--gpu-memory-utilization",
+            "0.9",
+            "--speculative-config",
+            "{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}",
+            "--reasoning-parser",
+            "deepseek_v41",
+            "--default-chat-template-kwargs",
+            "{\"reasoning_effort\":50,\"thinking\":true}",
+            "--tool-call-parser",
+            "deepseek_v41",
+            "--enable-auto-tool-choice",
+            "--language-model-only",
+            "--disable-uvicorn-access-log"
+         ],
+         "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --speculative-config '{\"draft_sample_method\":\"probabilistic\",\"enable_adaptive_verification\":false,\"method\":\"dspark\",\"num_speculative_tokens\":5,\"rejection_sample_method\":\"block\"}' --reasoning-parser deepseek_v41 --default-chat-template-kwargs '{\"reasoning_effort\":50,\"thinking\":true}' --tool-call-parser deepseek_v41 --enable-auto-tool-choice --language-model-only --disable-uvicorn-access-log",
+         "model": "/models/DeepSeek-V4.1-Flash",
+         "servedModelName": "deepseek-ai/DeepSeek-V4.1-Flash"
+      },
+      "warnings": []
+   },
+   "single-h200-8gpu-switches-off": {
+      "apiVersion": "vllm-recipe.jsonnet/v1",
+      "deployment": {
+         "commands": [
+            "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --default-chat-template-kwargs '\\''{\"reasoning_effort\":\"none\",\"thinking\":false}'\\'' --mm-encoder-tp-mode data --disable-uvicorn-access-log'"
+         ],
+         "mode": "single-node",
+         "nodes": [
+            {
+               "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --default-chat-template-kwargs '\\''{\"reasoning_effort\":\"none\",\"thinking\":false}'\\'' --mm-encoder-tp-mode data --disable-uvicorn-access-log'",
+               "docker": {
+                  "argv": [
+                     "docker",
+                     "run",
+                     "--name",
+                     "dsv41-node-0",
+                     "--gpus",
+                     "all",
+                     "--ipc",
+                     "host",
+                     "--shm-size",
+                     "32g",
+                     "--network",
+                     "host",
+                     "-e",
+                     "VLLM_ENGINE_READY_TIMEOUT_S=3600",
+                     "-e",
+                     "VLLM_USE_RUST_FRONTEND=1",
+                     "-v",
+                     "/models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro",
+                     "--entrypoint",
+                     "bash",
+                     "vllm/vllm-openai:deepseekv41-flash-0909",
+                     "-c",
+                     "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --default-chat-template-kwargs '{\"reasoning_effort\":\"none\",\"thinking\":false}' --mm-encoder-tp-mode data --disable-uvicorn-access-log"
+                  ],
+                  "command": "docker run --name dsv41-node-0 --gpus all --ipc host --shm-size 32g --network host -e VLLM_ENGINE_READY_TIMEOUT_S=3600 -e VLLM_USE_RUST_FRONTEND=1 -v /models/DeepSeek-V4.1-Flash:/models/DeepSeek-V4.1-Flash:ro --entrypoint bash vllm/vllm-openai:deepseekv41-flash-0909 -c 'vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --default-chat-template-kwargs '\\''{\"reasoning_effort\":\"none\",\"thinking\":false}'\\'' --mm-encoder-tp-mode data --disable-uvicorn-access-log'"
+               },
+               "env": {
+                  "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+                  "VLLM_USE_RUST_FRONTEND": "1"
+               },
+               "innerCommand": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --default-chat-template-kwargs '{\"reasoning_effort\":\"none\",\"thinking\":false}' --mm-encoder-tp-mode data --disable-uvicorn-access-log",
+               "ip": "10.0.0.10",
+               "rank": 0,
+               "ray": null,
+               "role": "server",
+               "serve": {
+                  "argv": [
+                     "vllm",
+                     "serve",
+                     "/models/DeepSeek-V4.1-Flash",
+                     "--served-model-name",
+                     "deepseek-ai/DeepSeek-V4.1-Flash",
+                     "--host",
+                     "0.0.0.0",
+                     "--port",
+                     "8000",
+                     "--tokenizer-mode",
+                     "deepseek_v41",
+                     "--tensor-parallel-size",
+                     "8",
+                     "--enable-expert-parallel",
+                     "--max-model-len",
+                     "1048576",
+                     "--max-num-batched-tokens",
+                     "16384",
+                     "--max-cudagraph-capture-size",
+                     "1024",
+                     "--gpu-memory-utilization",
+                     "0.9",
+                     "--default-chat-template-kwargs",
+                     "{\"reasoning_effort\":\"none\",\"thinking\":false}",
+                     "--mm-encoder-tp-mode",
+                     "data",
+                     "--disable-uvicorn-access-log"
+                  ],
+                  "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --default-chat-template-kwargs '{\"reasoning_effort\":\"none\",\"thinking\":false}' --mm-encoder-tp-mode data --disable-uvicorn-access-log"
+               }
+            }
+         ]
+      },
+      "distributed": {
+         "backend": "local",
+         "headAddress": null,
+         "masterPort": null,
+         "multiNode": false,
+         "nodeIps": [
+            "10.0.0.10"
+         ],
+         "rayPort": null
+      },
+      "environment": {
+         "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+         "VLLM_USE_RUST_FRONTEND": "1"
+      },
+      "features": {
+         "multimodal": {
+            "enabled": true,
+            "languageModelOnly": false,
+            "mmEncoderTpMode": "data"
+         },
+         "speculative": {
+            "config": null,
+            "enabled": false,
+            "method": "dspark",
+            "numSpeculativeTokens": 5
+         },
+         "thinking": {
+            "defaultChatTemplateKwargs": {
+               "reasoning_effort": "none",
+               "thinking": false
+            },
+            "enabled": false,
+            "reasoningEffort": "none"
+         },
+         "toolCalling": {
+            "enabled": false,
+            "parser": "deepseek_v41"
+         }
+      },
+      "input": {
+         "distributedBackend": "local",
+         "gpusPerNode": 8,
+         "multimodal": true,
+         "nodes": 1,
+         "parallelMode": "auto",
+         "pipelineParallel": 1,
+         "reasoningEffort": "none",
+         "speculative": false,
+         "speculativeMethod": "dspark",
+         "tensorParallel": 8,
+         "thinking": false,
+         "toolCalling": false,
+         "totalGpus": null
+      },
+      "meta": {
+         "name": "DeepSeek-V4.1-Flash vLLM launcher",
+         "notes": [
+            "TP / PP 由 nodes × gpusPerNode 推导；也可只传 totalGpus，由 nodes 推导每机卡数。",
+            "多机默认使用 Ray；distributedBackend=\"mp\" 可切换为 vLLM 原生 --nnodes 模式。",
+            "thinking 默认开启；reasoningEffort 支持 1-100、low/high/xhigh/max 或 none。"
+         ],
+         "recipe": "https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash",
+         "requires": "vLLM >= 0.31.0；镜像 vllm/vllm-openai:deepseekv41-flash-0909"
+      },
+      "parallel": {
+         "description": "TP8 × PP1（1 机 × 8 卡 = 8 卡）",
+         "expertParallel": true,
+         "gpusPerNode": 8,
+         "mode": "auto",
+         "nodes": 1,
+         "pipelineParallel": 1,
+         "tensorParallel": 8,
+         "worldSize": 8
+      },
+      "scenario": "单机 8×H200：关闭投机 / thinking / tool calling，开启多模态输入",
+      "serve": {
+         "argv": [
+            "vllm",
+            "serve",
+            "/models/DeepSeek-V4.1-Flash",
+            "--served-model-name",
+            "deepseek-ai/DeepSeek-V4.1-Flash",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8000",
+            "--tokenizer-mode",
+            "deepseek_v41",
+            "--tensor-parallel-size",
+            "8",
+            "--enable-expert-parallel",
+            "--max-model-len",
+            "1048576",
+            "--max-num-batched-tokens",
+            "16384",
+            "--max-cudagraph-capture-size",
+            "1024",
+            "--gpu-memory-utilization",
+            "0.9",
+            "--default-chat-template-kwargs",
+            "{\"reasoning_effort\":\"none\",\"thinking\":false}",
+            "--mm-encoder-tp-mode",
+            "data",
+            "--disable-uvicorn-access-log"
+         ],
+         "command": "vllm serve /models/DeepSeek-V4.1-Flash --served-model-name deepseek-ai/DeepSeek-V4.1-Flash --host 0.0.0.0 --port 8000 --tokenizer-mode deepseek_v41 --tensor-parallel-size 8 --enable-expert-parallel --max-model-len 1048576 --max-num-batched-tokens 16384 --max-cudagraph-capture-size 1024 --gpu-memory-utilization 0.9 --default-chat-template-kwargs '{\"reasoning_effort\":\"none\",\"thinking\":false}' --mm-encoder-tp-mode data --disable-uvicorn-access-log",
+         "model": "/models/DeepSeek-V4.1-Flash",
+         "servedModelName": "deepseek-ai/DeepSeek-V4.1-Flash"
+      },
+      "warnings": []
+   }
+}

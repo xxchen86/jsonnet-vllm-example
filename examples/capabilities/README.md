@@ -1,6 +1,6 @@
 # Jsonnet 能力示例集
 
-本目录按能力维度拆分了一组可运行示例。以下命令均在**项目根目录**执行（`Jsonnet-Test\`），运行时为 go-jsonnet v0.22.0。
+本目录按能力维度拆分了一组可运行示例。以下命令均在**项目根目录**执行（`jsonnet-vllm-example/`），运行时以本机 `jsonnet --version` 为准（当前环境为 go-jsonnet v0.20.0）。
 
 ## 能力地图
 
@@ -23,8 +23,8 @@
 
 ## 01 · 基础语法
 
-```powershell
-jsonnet examples\capabilities\01-language.jsonnet
+```bash
+jsonnet examples/capabilities/01-language.jsonnet
 ```
 
 - 8 种基础值：`null`、布尔、数字、字符串、数组、对象等。
@@ -36,8 +36,8 @@ jsonnet examples\capabilities\01-language.jsonnet
 
 ## 02 · 对象模型
 
-```powershell
-jsonnet examples\capabilities\02-objects.jsonnet
+```bash
+jsonnet examples/capabilities/02-objects.jsonnet
 ```
 
 - `:` 普通字段、`::` 隐藏字段、`:::` 强制可见字段。
@@ -48,8 +48,8 @@ jsonnet examples\capabilities\02-objects.jsonnet
 
 ## 03 · 继承与组合
 
-```powershell
-jsonnet examples\capabilities\03-inheritance.jsonnet
+```bash
+jsonnet examples/capabilities/03-inheritance.jsonnet
 ```
 
 - `base + mixin + { overrides }` 组合配置。
@@ -62,8 +62,8 @@ jsonnet examples\capabilities\03-inheritance.jsonnet
 
 ## 04 · 推导式与标准库
 
-```powershell
-jsonnet examples\capabilities\04-stdlib.jsonnet
+```bash
+jsonnet examples/capabilities/04-stdlib.jsonnet
 ```
 
 - 数组 / 对象推导、多层 `for`、过滤条件。
@@ -78,8 +78,8 @@ jsonnet examples\capabilities\04-stdlib.jsonnet
 
 ## 04b · 标准库巡礼
 
-```powershell
-jsonnet examples\capabilities\04b-stdlib-tour.jsonnet
+```bash
+jsonnet examples/capabilities/04b-stdlib-tour.jsonnet
 ```
 
 - 函数式：`mapWithIndex`、`mapWithKey`、`filterMap`、`flatMap`、`foldl`、`all`/`any`、`sum`/`avg`/`minArray`/`maxArray`。
@@ -92,12 +92,14 @@ jsonnet examples\capabilities\04b-stdlib-tour.jsonnet
 - 序列化：`parseJson`/`parseYaml`、`manifestJson*`、`manifestYamlDoc`/`manifestYamlStream`、`manifestToml`、`manifestIni`、`manifestPython*`、`manifestXmlJsonml`。
 - 运行时：`thisFile`、`resolvePath`、`extVar`、`native`、`trace`。
 
+> `04b` 在当前 v0.20.0 下运行；其中较新的标准库成员（如 `std.avg`、`std.contains`、`std.remove`/`removeAt`、`std.isEven`/`isOdd`/`isInteger`/`isDecimal`、`std.sha256` 等）用等价写法演示，未直接调用。
+
 > v0.22 还提供 `std.deepJoin`、`std.flattenDeepArray`、`std.equals`、`std.pi`、`std.escapeStringXML`、`std.manifestToml`、`std.resolvePath` 等成员；当前 `jsonnet-lint` 的静态表尚未收录它们，直接使用会误报 `Indexed object has no field`，但运行时正常。
 
 ## 05 · 模块化
 
-```powershell
-jsonnet examples\capabilities\05-modules.jsonnet
+```bash
+jsonnet examples/capabilities/05-modules.jsonnet
 ```
 
 - `import 'lib/deployment.libsonnet'`：导入一个求值为函数的参数化模板。
@@ -109,12 +111,12 @@ jsonnet examples\capabilities\05-modules.jsonnet
 
 ## 06 · 外部变量与 TLA
 
-```powershell
+```bash
 # extVar 注入全局值；--ext-code 保留数字/布尔/数组等类型
 # TLA 传给顶层函数；忽略 TLA 时使用函数默认值
-jsonnet examples\capabilities\06-extvar-tla.jsonnet --ext-str env=prod --ext-code replicas=3 --tla-str app=api --tla-code canary=true
+jsonnet examples/capabilities/06-extvar-tla.jsonnet --ext-str env=prod --ext-code replicas=3 --tla-str app=api --tla-code canary=true
 
-jsonnet examples\capabilities\06-extvar-tla.jsonnet --ext-str env=dev --ext-code replicas=1
+jsonnet examples/capabilities/06-extvar-tla.jsonnet --ext-str env=dev --ext-code replicas=1
 ```
 
 - `std.extVar('env')` 读取 `--ext-str env=...` 或 `--ext-code env=...`。
@@ -125,57 +127,57 @@ jsonnet examples\capabilities\06-extvar-tla.jsonnet --ext-str env=dev --ext-code
 
 参数很多时，不必堆叠一长串 `--ext-*`，可以直接把一个 JSON 文件作为一个参数对象传入。这是 go-jsonnet CLI 的原生能力。
 
-```powershell
+```bash
 # 1) extVar：整个 JSON 对象注入为 params
-jsonnet examples\capabilities\06b-params-file.jsonnet --ext-code-file params=examples\capabilities\params\prod\params.json
+jsonnet examples/capabilities/06b-params-file.jsonnet --ext-code-file params=examples/capabilities/params/prod/params.json
 
 # 2) TLA：整个 JSON 对象作为顶层函数参数
-jsonnet examples\capabilities\06c-params-tla-file.jsonnet --tla-code-file params=examples\capabilities\params\prod\params.json
+jsonnet examples/capabilities/06c-params-tla-file.jsonnet --tla-code-file params=examples/capabilities/params/prod/params.json
 
 # 3) 静态 import + -J 选择配置目录
-jsonnet -J examples\capabilities\params\prod examples\capabilities\06d-import-params.jsonnet
+jsonnet -J examples/capabilities/params/prod examples/capabilities/06d-import-params.jsonnet
 ```
 
 - `--ext-code-file` / `--tla-code-file` 会把文件内容当作 **Jsonnet 代码**求值；JSON 是合法的 Jsonnet 子集，因此 `.json` 文件可以直接使用。
 - 如果参数文件是**不可信的纯数据**，用 `--ext-str-file` 读取字符串，再在源码里 `std.parseJson`，避免执行 Jsonnet 代码：
 
-  ```powershell
-  jsonnet -e "std.parseJson(std.extVar('params'))" --ext-str-file params=examples\capabilities\params\prod\params.json
+  ```bash
+  jsonnet -e "std.parseJson(std.extVar('params'))" --ext-str-file params=examples/capabilities/params/prod/params.json
   ```
 
 - `-J` 只是 import 搜索路径；`import 'params.json'` 的路径仍必须是字符串字面量，不能运行时拼接。
 - 选择建议：多环境参数推荐 TLA + 文件（依赖显式、易测试）；完全静态配置可用 `import` + `-J`；需要在调用时覆盖个别值则用 extVar/TLA。
 - 注意 `06d` 依赖 `-J`，对它做 lint 时也要带路径：
-  `jsonnet-lint -J examples\capabilities\params\prod examples\capabilities\06d-import-params.jsonnet`
+  `jsonnet-lint -J examples/capabilities/params/prod examples/capabilities/06d-import-params.jsonnet`
 
 ## 07 · 输出形态
 
-```powershell
+```bash
 # 默认 JSON
-jsonnet examples\capabilities\07-output.jsonnet
+jsonnet examples/capabilities/07-output.jsonnet
 
 # 单文档 YAML：顶层字符串用 -S 原样输出
 jsonnet -S -e "std.manifestYamlDoc({ hello: 'world' })"
 
 # 多文档 YAML 流：顶层数组 + -y，见 09-k8s.jsonnet
-jsonnet -y examples\capabilities\09-k8s.jsonnet
+jsonnet -y examples/capabilities/09-k8s.jsonnet
 
-# 多文件输出：顶层对象的每个字段写一个文件；-S 让字符串原样写出，-c 自动建目录
-jsonnet -S -c -m examples\capabilities\out examples\capabilities\07b-multi.jsonnet
+# 多文件输出：顶层对象的每个字段写一个文件；-S 让字符串原样写出；目录需预先创建
+mkdir -p examples/capabilities/out && jsonnet -S -m examples/capabilities/out examples/capabilities/07b-multi.jsonnet
 ```
 
 - `std.manifestYamlDoc(obj)` / `std.manifestJsonEx(obj, indent)` 可在配置内部生成字符串。
 - `-m` 把顶层对象的每个字段写成一个文件；配合 `-S` 时字符串值按原样写入，否则会按 JSON 编码（带引号/转义）。
-- 不加 `-c` 时输出目录必须已存在。
+- 输出目录必须已存在（v0.20.0 的 `-m` 不会自动创建）。
 - 多文档 YAML 的完整例子见 [09-k8s.jsonnet](09-k8s.jsonnet)。
 
 ## 08 · 断言、错误与惰性
 
-```powershell
-jsonnet examples\capabilities\08-assertions.jsonnet
+```bash
+jsonnet examples/capabilities/08-assertions.jsonnet
 
 # 故意失败：退出码 1，stderr 包含 "replicas 必须 >= 1"
-jsonnet examples\capabilities\08b-failing.jsonnet
+jsonnet examples/capabilities/08b-failing.jsonnet
 ```
 
 - 对象断言写在对象字面量里；顶层断言写在最终表达式之前。
@@ -186,12 +188,12 @@ jsonnet examples\capabilities\08b-failing.jsonnet
 
 ## 09 · 综合实战：Kubernetes 清单
 
-```powershell
+```bash
 # JSON
-jsonnet examples\capabilities\09-k8s.jsonnet
+jsonnet examples/capabilities/09-k8s.jsonnet
 
 # 多文档 YAML（顶层数组）
-jsonnet -y examples\capabilities\09-k8s.jsonnet
+jsonnet -y examples/capabilities/09-k8s.jsonnet
 ```
 
 - 用 `env`、`app`、`imageTag` 参数化镜像、副本数、日志级别。
@@ -210,7 +212,7 @@ jsonnet -y examples\capabilities\09-k8s.jsonnet
 | `std.native(name)` | 调用宿主注册的原生函数；是否纯、是否有副作用由宿主决定；未注册时返回 `null`。 |
 | `std.extVar(name)` | 读取 VM 的外部变量。同一次求值内稳定，但结果取决于启动参数，不是仅由源码和显式参数决定；缺少变量会报错。 |
 | `std.thisFile` | 当前文件路径，属于求值上下文；同一文件内是常量，不产生副作用。 |
-| `std.resolvePath(path, base)` | 纯字符串路径运算，不访问文件系统；Windows 下注意使用 `/`。 |
+| `std.resolvePath(path, base)` | 纯字符串路径运算，不访问文件系统；路径统一使用 `/`。 |
 
 断言失败、`error`、非法解析输入等会中止整个求值：这不是副作用，而是“部分函数”的失败，且 Jsonnet 没有 `try/catch`。
 
@@ -232,9 +234,9 @@ jsonnet -y examples\capabilities\09-k8s.jsonnet
 
 ## 质量工具
 
-```powershell
-jsonnetfmt --in-place examples\capabilities\01-language.jsonnet
-jsonnetfmt --test examples\capabilities\01-language.jsonnet
-jsonnet-lint examples\capabilities\01-language.jsonnet
-jsonnet-deps examples\capabilities\05-modules.jsonnet
+```bash
+jsonnetfmt --in-place examples/capabilities/01-language.jsonnet
+jsonnetfmt --test examples/capabilities/01-language.jsonnet
+jsonnet-lint examples/capabilities/01-language.jsonnet
+jsonnet-deps examples/capabilities/05-modules.jsonnet
 ```

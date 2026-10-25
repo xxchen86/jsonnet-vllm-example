@@ -1,11 +1,11 @@
-# DeepSeek-V4.1-Flash × vLLM 启动参数模板（Jsonnet）
+# DeepSeek-V4.1-Flash × vLLM 启动参数模板（Jsonnet，两阶段）
 
-把 [vLLM 官方 recipe](https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash) 的 `vllm serve` 参数收敛成一份 Jsonnet 模板：
+把 [vLLM 官方 recipe](https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash) 的 `vllm serve` 参数收敛成两阶段 Jsonnet 模板：
 
-- **卡数驱动并行**：外部传入 `gpusPerNode`，自动推导 TP / PP；
-- **机器数驱动分布式**：外部传入 `nodes`，生成 Ray 或 mp 后端的逐机命令；
-- **开关驱动参数**：外部传入 `speculative` / `thinking` / `toolCalling` / `multimodal`，按开关生成或省略对应参数；
-- **直接可执行**：输出同时包含结构化 JSON、`argv` 数组和可复制执行的逐机 Docker 命令。
+- **阶段 1：参数生成** —— 场景配置（机器数、卡数、功能开关）→ `vllm` 原生参数产物（`vllm-params/v1`）；
+- **阶段 2：CLI 渲染** —— 参数产物 → `argv`、shell 命令、Docker / Ray / mp 逐机命令（`vllm-cli/v1`）。
+
+参数产物刻意使用 **vLLM 原生参数名**（snake_case，对应 `EngineArgs` / `vllm serve`），并按 `serve` / `deployment` / `container` 分区，方便有 vLLM 经验的开发者直接阅读和比对。
 
 > 目标镜像：`vllm/vllm-openai:deepseekv41-flash-0909`（要求 vLLM >= 0.31.0）。
 > 模型权重约 511 GB（含 196B Engram 记忆表），官方建议至少 614 GB 显存（511 GB × 1.2）。
@@ -14,44 +14,64 @@
 
 ```text
 vllm/
-├── main.jsonnet                  # 入口：function(config={})，用 --tla-code-file 注入参数
+├── generate-params.jsonnet      # 阶段 1 入口：场景配置 -> 参数产物
+├── render-cli.jsonnet           # 阶段 2 入口：参数产物 -> CLI 产物
 ├── lib/
-│   ├── parallel.libsonnet        # TP/PP 推导、校验、每机 IP 生成
-│   └── serve.libsonnet           # vLLM 参数、功能开关、Docker / Ray / mp 命令
-├── params/
-│   ├── single-h200-8gpu.json             # 1 机 × 8 卡，TP8，功能全开
-│   ├── single-h200-8gpu-switches-off.json # 1 机 × 8 卡，关闭投机/thinking/tool，开多模态
-│   ├── single-gb200-4gpu.json            # 1 机 × 4 卡，TP4
-│   ├── multi-h200-2x8-ray.json           # 2 机 × 8 卡，TP8 × PP2，Ray
-│   └── multi-h200-2x8-mp-tp16.json       # 2 机 × 8 卡，TP16，mp + --nnodes
-├── tests.jsonnet                 # 断言测试
-├── render.ps1                    # 渲染脚本（输出 JSON / YAML）
-└── run-tests.ps1                 # 跑断言 + 渲染全部参数文件
+│   ├── params.libsonnet         # 参数生成：默认值 / 校验 / TP-PP / 功能映射
+│   ├── cli.libsonnet            # CLI 渲染：schema 校验 / argv / shell / Docker / Ray / mp
+│   └── parallel.libsonnet       # TP/PP 推导、校验、每机 IP
+├── params/                      # 场景输入
+│   ├── single-h200-8gpu.json
+│   ├── single-h200-8gpu-switches-off.json
+│   ├── single-gb200-4gpu.json
+│   ├── multi-h200-2x8-ray.json
+│   └── multi-h200-2x8-mp-tp16.json
+├── params-tests.jsonnet         # 阶段 1 断言（含 validate 负例）
+├── cli-tests.jsonnet            # 阶段 2 断言（含 validate 负例）
+├── golden-tests.jsonnet         # 新旧 CLI 投影等价性测试
+├── tests/golden/legacy-render.json  # 改造前冻结的 5 场景基线
+├── render-params.sh             # 阶段 1 文件落盘脚本
+├── render-cli.sh                # 阶段 2 文件落盘脚本
+└── run-tests.sh                 # 三层测试 + 所有场景的两阶段渲染
 ```
 
 ## 快速开始
 
-```powershell
-# 1. 直接渲染到终端（默认单机 8×H200）
-jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/single-h200-8gpu.json
+### Linux / WSL
 
-# 2. 用脚本写入文件（UTF-8 无 BOM）
-powershell -ExecutionPolicy Bypass -File vllm/render.ps1 -Config vllm/params/single-h200-8gpu.json -OutFile vllm/out/single.json
+```bash
+mkdir -p vllm/out
 
-# 3. 渲染多机 Ray 场景
-powershell -ExecutionPolicy Bypass -File vllm/render.ps1 -Config vllm/params/multi-h200-2x8-ray.json
+# 阶段 1：生成参数产物
+jsonnet vllm/generate-params.jsonnet \
+  --tla-code-file config=vllm/params/single-h200-8gpu.json \
+  > vllm/out/single-h200-8gpu.params.json
 
-# 4. 输出 YAML
-powershell -ExecutionPolicy Bypass -File vllm/render.ps1 -Config vllm/params/single-h200-8gpu.json -Yaml
+# 阶段 2：渲染 CLI
+jsonnet vllm/render-cli.jsonnet \
+  --tla-code-file params=vllm/out/single-h200-8gpu.params.json \
+  > vllm/out/single-h200-8gpu.cli.json
 ```
 
-也可以直接内联覆盖：
+### Shell 脚本
 
-```powershell
-jsonnet vllm/main.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, speculative: true}'
+```bash
+./vllm/render-params.sh \
+  -c vllm/params/single-h200-8gpu.json \
+  -o vllm/out/single-h200-8gpu.params.json
+
+./vllm/render-cli.sh \
+  -p vllm/out/single-h200-8gpu.params.json \
+  -o vllm/out/single-h200-8gpu.cli.json
 ```
 
-不带任何参数时，入口会使用默认值（单机 8×H200、TP8、thinking / DSpark / tool calling 全开）。
+脚本会 `cd` 到仓库根目录，`-c` / `-p` / `-o` 的路径都按仓库根目录解析；省略 `-o` 时输出到 stdout。
+
+也可以内联覆盖场景参数：
+
+```bash
+jsonnet vllm/generate-params.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, speculative: true}'
+```
 
 ## 输入参数
 
@@ -64,28 +84,26 @@ jsonnet vllm/main.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, speculat
 | `gpusPerNode` | `8` | 每台机器的 GPU 数；与 `totalGpus` 同时设置且冲突时报错 |
 | `gpuMemoryGiB` | `141` | 单卡显存（H200=141，H100=80，B200/GB200=192），仅用于显存下限提示 |
 | `modelLayers` | `40` | 模型层数，仅用于 PP 整除性提示 |
-| `parallelMode` | `"auto"` | `auto` / `tp` / `tp-pp`，见下一节 |
+| `parallelMode` | `"auto"` | `auto` / `tp` / `tp-pp` |
 | `tensorParallel` | `null` | 显式指定 TP，覆盖推导值 |
 | `pipelineParallel` | `null` | 显式指定 PP，覆盖推导值 |
-| `expertParallel` | `true` | TP > 1 时追加 `--enable-expert-parallel` |
+| `expertParallel` | `true` | TP > 1 时启用 expert parallel |
 | `distributedBackend` | `"ray"` | 多机后端：`ray` 或 `mp`；单机忽略 |
 | `nodeIpPattern` | `"10.0.0.%d"` | 按机器序号格式化 IP |
-| `nodeIpStart` | `10` | IP 起始值，配合 `nodeIpPattern` |
+| `nodeIpStart` | `10` | IP 起始值 |
 | `nodeIps` | `[]` | 显式 IP 列表；非空时优先于 `nodeIpPattern` |
 | `rayPort` | `6379` | Ray head 端口 |
 | `masterPort` | `29501` | mp 后端 rendezvous 端口 |
 
-> `expertParallel` 默认开启（TP > 1 时生效）；如果遇到 EP 后端兼容性问题，可设为 `false` 回退到纯 TP。
-
 ### 功能开关
 
-| 字段 | 默认值 | 说明 |
+| 字段 | 默认值 | 映射到参数产物 |
 | --- | --- | --- |
-| `speculative` | `true` | `true` / `false`，或对象（见下） |
-| `thinking` | `true` | 是否默认开启思考 |
-| `reasoningEffort` | `50` | `1-100` 整数，或 `low` / `high` / `xhigh` / `max` / `none` |
-| `toolCalling` | `true` | `true` / `false`，或 `{enabled, parser}` |
-| `multimodal` | `false` | `false` 生成 `--language-model-only`；`true` 生成 `--mm-encoder-tp-mode data` |
+| `speculative` | `true` | `serve.speculative_config` |
+| `thinking` | `true` | `serve.reasoning_parser` + `serve.default_chat_template_kwargs` |
+| `reasoningEffort` | `50` | 写入 `serve.default_chat_template_kwargs.reasoning_effort`；支持 1-100、`low`/`high`/`xhigh`/`max`/`none` |
+| `toolCalling` | `true` | `serve.tool_call_parser` + `serve.enable_auto_tool_choice` |
+| `multimodal` | `false` | false → `serve.language_model_only`；true → `serve.mm_encoder_tp_mode` |
 | `mmEncoderTpMode` | `"data"` | 多模态编码器并行模式：`data` 或 `weights` |
 
 `speculative` 用对象写法可以覆盖 DSpark 细节：
@@ -108,30 +126,30 @@ jsonnet vllm/main.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, speculat
 | 字段 | 默认值 | 说明 |
 | --- | --- | --- |
 | `model` | `"deepseek-ai/DeepSeek-V4.1-Flash"` | HuggingFace model id |
-| `modelPath` | `null` | 容器内模型路径；设置后优先于 `model` |
-| `modelHostPath` | `null` | 宿主机模型目录；与 `modelPath` 同时设置时自动 `-v ...:ro` |
+| `modelPath` | `null` | 容器内模型路径；设置后作为 `vllm serve` 的 model 位置参数 |
+| `modelHostPath` | `null` | 宿主机模型目录；与 `modelPath` 同时设置时自动挂载 |
 | `image` | `"vllm/vllm-openai:deepseekv41-flash-0909"` | vLLM 镜像 |
 | `host` / `port` | `"0.0.0.0"` / `8000` | HTTP 监听地址 |
-| `apiKey` | `null` | 设置后追加 `--api-key`（注意不要把真实密钥提交到仓库） |
+| `apiKey` | `null` | 设置后写入参数产物 `serve.api_key` |
 | `maxModelLen` | `1048576` | 官方 recipe 的 1M 上下文 |
 | `maxNumBatchedTokens` | `16384` | 官方 recipe 默认 |
 | `maxCudagraphCaptureSize` | `1024` | 官方 recipe 默认 |
 | `gpuMemoryUtilization` | `0.9` | 官方 recipe 默认 |
-| `maxNumSeqs` | `null` | 不设置则用 vLLM 默认 |
-| `enforceEager` | `false` | 调试时可设为 `true`，追加 `--enforce-eager` |
-| `disableUvicornAccessLog` | `true` | 追加 `--disable-uvicorn-access-log` |
+| `maxNumSeqs` | `null` | 不设置则省略 |
+| `enforceEager` | `false` | 设为 `true` 时生成 `serve.enforce_eager` |
+| `disableUvicornAccessLog` | `true` | 设为 `true` 时生成 `serve.disable_uvicorn_access_log` |
 | `dockerShmSize` | `"32g"` | Docker `--shm-size` |
 | `dockerNetworkHost` | `true` | 多机建议保持 `true`（`--network host`） |
 | `hfHubOffline` | `false` | 设为 `true` 时追加 `HF_HUB_OFFLINE=1` |
 
 ### 逃生舱
 
-| 字段 | 说明 |
-| --- | --- |
-| `extraEnv` | 追加/覆盖容器环境变量 |
-| `extraMounts` | 追加挂载，元素形如 `{hostPath, containerPath, readOnly}` |
-| `extraDockerArgs` | 追加到 `docker run` 的参数（字符串数组） |
-| `extraArgs` | 追加到 `vllm serve` 末尾的参数（字符串数组） |
+| 字段 | 产物落点 | 说明 |
+| --- | --- | --- |
+| `extraEnv` | `container.environment` | 追加/覆盖容器环境变量；值统一转成字符串 |
+| `extraMounts` | `container.mounts` | 追加挂载，元素形如 `{hostPath, containerPath, readOnly}` |
+| `extraDockerArgs` | `extras.docker_args` | 原样追加到 `docker run`（阶段 2 不解释） |
+| `extraArgs` | `extras.serve_args` | 原样追加到 `vllm serve` 末尾（阶段 2 不解释） |
 
 ## 并行推导
 
@@ -145,52 +163,208 @@ jsonnet vllm/main.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, speculat
 
 约束与提示：
 
-- 必须满足 `TP × PP == W`，否则直接报错；
-- 卡数可以传 `totalGpus`（总卡数）或 `gpusPerNode`（每机卡数）；`totalGpus` 必须能被 `nodes` 整除，两者同时显式设置且冲突时报错；
+- 必须满足 `TP × PP == W`，否则阶段 1 直接报错；
+- 卡数可以传 `totalGpus` 或 `gpusPerNode`；`totalGpus` 必须能被 `nodes` 整除；
 - 显式传入 `tensorParallel` / `pipelineParallel` 时优先使用显式值，但仍要满足上面的等式；
 - 模型共 40 层，PP 建议取 40 的约数（1/2/4/5/8/10/20/40）。例如 3 机 `auto` 会得到 `PP=3`，模板会给出警告，建议改用 `parallelMode: "tp"`；
 - 总显存低于 614 GB 时会给出警告，但不会阻止渲染。
 
-> 本模板聚焦 TP / PP；如果需要 DEP（DP + EP）高吞吐模式，可参考 [vLLM Data Parallel Deployment](https://docs.vllm.ai/en/v0.31.0/serving/data_parallel_deployment.html)，在参数中加入 `--data-parallel-size` 等选项。
-
 常见组合：
 
-| 场景 | 配置 | 结果 |
+| 场景 | 配置 | 参数产物 |
 | --- | --- | --- |
-| 单机 8 卡 | `nodes=1, gpusPerNode=8` | `TP8 × PP1` |
-| 单机 4 卡 | `nodes=1, gpusPerNode=4` | `TP4 × PP1` |
-| 2 机 × 8 卡，机内 TP | `nodes=2, parallelMode="tp-pp"` | `TP8 × PP2` |
-| 2 机 × 8 卡，跨机 TP | `nodes=2, parallelMode="tp"` | `TP16 × PP1` |
-| 4 机 × 4 卡，跨机 TP | `nodes=4, gpusPerNode=4, parallelMode="tp"` | `TP16 × PP1` |
+| 单机 8 卡 | `nodes=1, gpusPerNode=8` | `serve.tensor_parallel_size=8`, `pipeline_parallel_size=1` |
+| 单机 4 卡 | `nodes=1, gpusPerNode=4` | `tensor_parallel_size=4`, `pipeline_parallel_size=1` |
+| 2 机 × 8 卡，机内 TP | `nodes=2, parallelMode="tp-pp"` | `tensor_parallel_size=8`, `pipeline_parallel_size=2` |
+| 2 机 × 8 卡，跨机 TP | `nodes=2, parallelMode="tp"` | `tensor_parallel_size=16`, `pipeline_parallel_size=1` |
+| 4 机 × 4 卡，跨机 TP | `nodes=4, gpusPerNode=4, parallelMode="tp"` | `tensor_parallel_size=16`, `pipeline_parallel_size=1` |
 
-只传总卡数也可以：
+## 阶段 1 产物：`vllm-params/v1`
 
-```powershell
-jsonnet vllm/main.jsonnet --tla-code config='{nodes: 2, totalGpus: 16, parallelMode: "tp"}'
+单机 8×H200 场景的产物（节选）：
+
+```jsonc
+{
+  "apiVersion": "vllm-params/v1",
+  "scenario": "单机 8×H200：TP8，开启 DSpark 投机、thinking、tool calling",
+  "serve": {
+    "model": "/models/DeepSeek-V4.1-Flash",
+    "served_model_name": "deepseek-ai/DeepSeek-V4.1-Flash",
+    "tokenizer_mode": "deepseek_v41",
+    "host": "0.0.0.0",
+    "port": 8000,
+    "tensor_parallel_size": 8,
+    "pipeline_parallel_size": 1,
+    "enable_expert_parallel": true,
+    "max_model_len": 1048576,
+    "max_num_batched_tokens": 16384,
+    "max_cudagraph_capture_size": 1024,
+    "gpu_memory_utilization": 0.9,
+    "speculative_config": {
+      "method": "dspark",
+      "num_speculative_tokens": 5,
+      "draft_sample_method": "probabilistic",
+      "rejection_sample_method": "block",
+      "enable_adaptive_verification": false
+    },
+    "reasoning_parser": "deepseek_v41",
+    "default_chat_template_kwargs": {
+      "thinking": true,
+      "reasoning_effort": 50
+    },
+    "tool_call_parser": "deepseek_v41",
+    "enable_auto_tool_choice": true,
+    "language_model_only": true,
+    "disable_uvicorn_access_log": true
+  },
+  "deployment": {
+    "nodes": 1,
+    "gpus_per_node": 8,
+    "node_ips": ["10.0.0.10"],
+    "distributed_executor_backend": "local"
+  },
+  "container": {
+    "image": "vllm/vllm-openai:deepseekv41-flash-0909",
+    "environment": {
+      "VLLM_ENGINE_READY_TIMEOUT_S": "3600",
+      "VLLM_USE_RUST_FRONTEND": "1"
+    },
+    "mounts": [
+      {
+        "host_path": "/models/DeepSeek-V4.1-Flash",
+        "container_path": "/models/DeepSeek-V4.1-Flash",
+        "read_only": true
+      }
+    ],
+    "shm_size": "32g",
+    "network_host": true,
+    "name_prefix": "dsv41"
+  },
+  "extras": {
+    "serve_args": [],
+    "docker_args": []
+  },
+  "warnings": []
+}
 ```
+
+约定：
+
+- `serve` 的键名就是 vLLM 参数名。除 `model`（位置参数）、`pipeline_parallel_size: 1`（vLLM 默认值，渲染时省略）、`distributed_executor_backend: "local"`（单机不传旗标）外，**键出现即表示要传对应旗标**（snake_case → `--kebab-case`）。
+- 布尔旗标只在 `true` 时出现；可选参数未设置时直接省略（如 `api_key`、`max_num_seqs`、`enforce_eager`）。
+- `speculative_config` / `default_chat_template_kwargs` 保持结构化对象，阶段 2 才序列化为 JSON。
+- `thinking` 映射为 `reasoning_parser` + `default_chat_template_kwargs`；tool calling 映射为 `tool_call_parser` + `enable_auto_tool_choice`；multimodal 映射为 `mm_encoder_tp_mode` 或 `language_model_only`。不再有 `features` 抽象层。
+- Jsonnet 的 JSON 浮点输出可能带长尾（例如 `0.90000000000000002`），值等价于 `0.9`；阶段 2 渲染 argv 时会格式化为 `0.9`。
+- 设置了 `apiKey` 时，`serve.api_key` 会以明文写入参数产物；`vllm/out/` 已被 `.gitignore` 忽略，请勿提交带密钥的产物。
+
+### `serve` 键名 ↔ vLLM 旗标
+
+| 参数产物键 | vLLM 旗标 |
+| --- | --- |
+| `model` | `vllm serve <model>`（位置参数） |
+| `served_model_name` | `--served-model-name` |
+| `tokenizer_mode` | `--tokenizer-mode` |
+| `host` | `--host` |
+| `port` | `--port` |
+| `api_key` | `--api-key` |
+| `tensor_parallel_size` | `--tensor-parallel-size` |
+| `pipeline_parallel_size` | `--pipeline-parallel-size`（值为 1 时省略） |
+| `enable_expert_parallel` | `--enable-expert-parallel` |
+| `max_model_len` | `--max-model-len` |
+| `max_num_batched_tokens` | `--max-num-batched-tokens` |
+| `max_cudagraph_capture_size` | `--max-cudagraph-capture-size` |
+| `gpu_memory_utilization` | `--gpu-memory-utilization` |
+| `max_num_seqs` | `--max-num-seqs` |
+| `speculative_config` | `--speculative-config`（JSON） |
+| `reasoning_parser` | `--reasoning-parser` |
+| `default_chat_template_kwargs` | `--default-chat-template-kwargs`（JSON） |
+| `tool_call_parser` | `--tool-call-parser` |
+| `enable_auto_tool_choice` | `--enable-auto-tool-choice` |
+| `language_model_only` | `--language-model-only` |
+| `mm_encoder_tp_mode` | `--mm-encoder-tp-mode` |
+| `disable_uvicorn_access_log` | `--disable-uvicorn-access-log` |
+| `enforce_eager` | `--enforce-eager` |
+
+### `deployment` 与逐机参数
+
+| 产物键 | 阶段 2 渲染 |
+| --- | --- |
+| `nodes` | mp: `--nnodes`；Ray: `ray start` 的节点数 |
+| `gpus_per_node` | Ray: `ray start --num-gpus` |
+| `node_ips` | `--node-ip-address`、mp 的 `--master-addr` |
+| `distributed_executor_backend` | `--distributed-executor-backend`（`local` 时省略） |
+| `ray_port` | `ray start --port` / worker 的 `--address` |
+| `master_port` | mp 的 `--master-port` |
+
+## 阶段 2 产物：`vllm-cli/v1`
+
+```jsonc
+{
+  "apiVersion": "vllm-cli/v1",
+  "meta": {
+    "sourceApiVersion": "vllm-params/v1",
+    "scenario": "单机 8×H200：..."
+  },
+  "cli": {
+    "serve": {
+      "model": "/models/DeepSeek-V4.1-Flash",
+      "servedModelName": "deepseek-ai/DeepSeek-V4.1-Flash",
+      "argv": ["vllm", "serve", "..."],
+      "command": "vllm serve ..."
+    },
+    "deployment": {
+      "mode": "single-node",
+      "nodes": [
+        {
+          "rank": 0,
+          "role": "server",
+          "ip": "10.0.0.10",
+          "env": { "...": "..." },
+          "innerCommand": "...",
+          "serve": { "argv": [], "command": "" },
+          "ray": null,
+          "docker": { "argv": [], "command": "" },
+          "command": "docker run ..."
+        }
+      ],
+      "commands": ["docker run ..."]
+    }
+  },
+  "warnings": []
+}
+```
+
+- `cli.serve.argv` 是 exec 形式（每个 token 一个元素），适合程序直接消费；
+- `cli.serve.command` 和 `cli.deployment.nodes[].command` 是 shell 形式，已做单引号转义，可直接复制执行；
+- `cli.deployment.nodes[].docker.argv` 也是 exec 形式；
+- 直接执行 `cli.serve.command` 前需要自行注入 `container.environment` 中的变量；`cli.deployment.nodes[].command` 已通过 `docker run -e` 注入；
+- 单机 `mode` 为 `single-node`；Ray 多机为 `ray-multi-node`；mp 多机为 `mp-multi-node`；
+- Ray worker 的 `serve` 为 `null`，非 Ray 的 `ray` 为 `null`。
 
 ## 多机部署
 
-多机有两种后端，模板会生成对应的逐机命令。所有命令都在 `deployment.nodes[]` 中，每个节点一个 `command`，并附带 `docker.argv`（exec 形式）和 `docker.command`（shell 形式）。
+### 1. Ray 后端（默认）
 
-### 1. Ray 后端（默认，官方多机示例用法）
+```bash
+jsonnet vllm/generate-params.jsonnet \
+  --tla-code-file config=vllm/params/multi-h200-2x8-ray.json \
+  > vllm/out/ray.params.json
 
-先生成配置：
-
-```powershell
-jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/multi-h200-2x8-ray.json
+jsonnet vllm/render-cli.jsonnet \
+  --tla-code-file params=vllm/out/ray.params.json \
+  > vllm/out/ray.cli.json
 ```
 
-生成的节点命令：
+`cli.deployment.nodes[]` 中：
 
-- **head（node 0）**：
+- **head（rank 0）**：
 
   ```bash
   ray start --head --port=6379 --node-ip-address=10.0.0.10 --num-gpus=8 --disable-usage-stats \
     && vllm serve ... --distributed-executor-backend ray
   ```
 
-- **worker（node 1..N-1）**：
+- **worker（rank 1..N-1）**：
 
   ```bash
   ray start --address=10.0.0.10:6379 --node-ip-address=10.0.0.11 --num-gpus=8 --block --disable-usage-stats
@@ -198,25 +372,29 @@ jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/multi-h200-2x8-ray.
 
 启动顺序：
 
-1. 先执行 head 的命令（它会先起 Ray head，再启动 vLLM；vLLM 会等待集群资源）；
+1. 先执行 head 的命令（先起 Ray head，再启动 vLLM；vLLM 会等待集群资源）；
 2. 再在其他机器执行各自的 worker 命令；
 3. `VLLM_ENGINE_READY_TIMEOUT_S=3600` 给了足够长的等待时间；vLLM 的 Ray placement group 默认等待 1800 秒，请在这个时间内把 worker 起齐。
 
 注意：
 
 - Ray 模式下**不要**传 `--nnodes`。vLLM 0.31 只允许 `mp` / `uni` / `external_launcher` 后端使用 `--nnodes`；Ray 后端通过集群资源发现节点；
-- 多机建议 `dockerNetworkHost: true`，否则 Ray / NCCL 的动态端口需要额外映射；
+- 多机建议 `container.network_host: true`，否则 Ray / NCCL 的动态端口需要额外映射；
 - 所有机器的镜像、模型路径、Ray 版本应保持一致。
 
 ### 2. mp 后端（vLLM 原生 `--nnodes`）
 
-```powershell
-jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/multi-h200-2x8-mp-tp16.json
+```bash
+jsonnet vllm/generate-params.jsonnet \
+  --tla-code-file config=vllm/params/multi-h200-2x8-mp-tp16.json \
+  > vllm/out/mp.params.json
+
+jsonnet vllm/render-cli.jsonnet \
+  --tla-code-file params=vllm/out/mp.params.json \
+  > vllm/out/mp.cli.json
 ```
 
-生成的节点命令：
-
-- **head（node 0）**：
+- **head（rank 0）**：
 
   ```bash
   vllm serve ... \
@@ -225,7 +403,7 @@ jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/multi-h200-2x8-mp-t
     --master-addr 10.0.0.10 --master-port 29501
   ```
 
-- **worker（node 1..N-1）**：
+- **worker（rank 1..N-1）**：
 
   ```bash
   vllm serve ... \
@@ -239,20 +417,18 @@ jsonnet vllm/main.jsonnet --tla-code-file config=vllm/params/multi-h200-2x8-mp-t
 
 ## 功能开关映射
 
-| 开关 | 生成的 vLLM 参数 |
-| --- | --- |
-| `speculative: true` | `--speculative-config '{"method":"dspark","num_speculative_tokens":5,"draft_sample_method":"probabilistic","rejection_sample_method":"block","enable_adaptive_verification":false}'` |
-| `speculative: false` | 省略 `--speculative-config` |
-| `thinking: true` | `--reasoning-parser deepseek_v41` + `--default-chat-template-kwargs '{"thinking":true,"reasoning_effort":50}'` |
-| `thinking: false` 或 `reasoningEffort: "none"` | 省略 `--reasoning-parser`，并生成 `--default-chat-template-kwargs '{"thinking":false,"reasoning_effort":"none"}'` |
-| `toolCalling: true` | `--tool-call-parser deepseek_v41 --enable-auto-tool-choice` |
-| `toolCalling: false` | 省略上述两个参数 |
-| `multimodal: false` | `--language-model-only`（跳过视觉编码器，省显存） |
-| `multimodal: true` | 省略 `--language-model-only`，生成 `--mm-encoder-tp-mode data`（可用 `mmEncoderTpMode` 改为 `weights`） |
-| `reasoningEffort: "low" / "high" / "xhigh" / "max"` | 分别归一化为 `25 / 50 / 75 / 100` |
-| `reasoningEffort: 1..100` | 原样写入 `reasoning_effort` |
-
-> `--reasoning-parser` 与 thinking 开关绑定：关闭 thinking 时不注册解析器。如果希望请求级临时开启 thinking，请保持 `thinking: true`，再在请求里覆盖 `chat_template_kwargs`。
+| 开关 | 参数产物 | 生成的 vLLM 参数 |
+| --- | --- | --- |
+| `speculative: true` | `speculative_config` | `--speculative-config '{"method":"dspark",...}'` |
+| `speculative: false` | 省略该键 | 省略 `--speculative-config` |
+| `thinking: true` | `reasoning_parser` + `default_chat_template_kwargs` | `--reasoning-parser deepseek_v41` + `--default-chat-template-kwargs '{"thinking":true,"reasoning_effort":50}'` |
+| `thinking: false` 或 `reasoningEffort: "none"` | 省略 `reasoning_parser`，kwargs 为 false/none | `--default-chat-template-kwargs '{"thinking":false,"reasoning_effort":"none"}'` |
+| `toolCalling: true` | `tool_call_parser` + `enable_auto_tool_choice` | `--tool-call-parser deepseek_v41 --enable-auto-tool-choice` |
+| `toolCalling: false` | 省略上述两个键 | 省略对应参数 |
+| `multimodal: false` | `language_model_only: true` | `--language-model-only` |
+| `multimodal: true` | `mm_encoder_tp_mode: "data"` | `--mm-encoder-tp-mode data` |
+| `reasoningEffort: "low" / "high" / "xhigh" / "max"` | 归一化为 `25 / 50 / 75 / 100` | 写入 `reasoning_effort` |
+| `reasoningEffort: 1..100` | 原样写入 | 写入 `reasoning_effort` |
 
 请求级覆盖示例（服务端已启动）：
 
@@ -274,57 +450,6 @@ resp = client.chat.completions.create(
 print(resp.choices[0].message.content)
 ```
 
-## 输出结构
-
-```jsonc
-{
-  "parallel": {
-    "description": "TP8 × PP2（2 机 × 8 卡 = 16 卡）",
-    "tensorParallel": 8,
-    "pipelineParallel": 2,
-    "expertParallel": true
-  },
-  "distributed": {
-    "backend": "ray",
-    "multiNode": true,
-    "nodeIps": ["10.0.0.10", "10.0.0.11"],
-    "headAddress": "10.0.0.10",
-    "rayPort": 6379
-  },
-  "features": {
-    "speculative": { "enabled": true, "method": "dspark" },
-    "thinking": { "enabled": true, "reasoningEffort": 50 },
-    "toolCalling": { "enabled": true, "parser": "deepseek_v41" },
-    "multimodal": { "enabled": false, "languageModelOnly": true }
-  },
-  "serve": {
-    "model": "/models/DeepSeek-V4.1-Flash",
-    "argv": ["vllm", "serve", "..."],
-    "command": "vllm serve ..."
-  },
-  "deployment": {
-    "mode": "ray-multi-node",
-    "nodes": [
-      {
-        "rank": 0,
-        "role": "head",
-        "ip": "10.0.0.10",
-        "innerCommand": "ray start --head ... && vllm serve ...",
-        "docker": { "argv": ["docker", "run", "..."], "command": "docker run ..." },
-        "command": "docker run ..."
-      }
-    ]
-  },
-  "warnings": []
-}
-```
-
-- `serve.argv` 是 exec 形式（每个 token 一个元素），适合程序直接消费；
-- `serve.command` 和 `deployment.nodes[].command` 是 shell 形式，已做单引号转义，可直接复制执行；
-- `deployment.nodes[].docker.argv` 也是 exec 形式；
-- 直接执行 `serve.command` 前需要自行注入 `environment` 中的变量；`deployment.nodes[].command` 已通过 `docker run -e` 注入；
-- 单机配置的 `deployment.mode` 为 `single-node`，`distributed.backend` 为 `local`，没有 Ray 对象。
-
 ## 示例参数文件
 
 | 文件 | 机器 × 卡数 | 并行 | 后端 | 说明 |
@@ -337,21 +462,32 @@ print(resp.choices[0].message.content)
 
 ## 校验与测试
 
-```powershell
-# 断言测试：TP/PP、开关映射、警告、Ray/mp 命令
-jsonnet vllm/tests.jsonnet
+```bash
+# 阶段 1 断言（含 validate 负例）
+jsonnet vllm/params-tests.jsonnet
 
-# 断言测试 + 渲染所有 params
-powershell -ExecutionPolicy Bypass -File vllm/run-tests.ps1
+# 阶段 2 断言（含 schema 负例）
+jsonnet vllm/cli-tests.jsonnet
+
+# 新旧 CLI 投影等价性（对比改造前冻结的 5 场景基线）
+jsonnet vllm/golden-tests.jsonnet
+
+# 三层测试 + 所有场景的两阶段渲染
+./vllm/run-tests.sh
 
 # 格式化检查
-jsonnetfmt --test vllm/main.jsonnet vllm/lib/parallel.libsonnet vllm/lib/serve.libsonnet vllm/tests.jsonnet
+jsonnetfmt --test \
+  vllm/generate-params.jsonnet vllm/render-cli.jsonnet \
+  vllm/lib/params.libsonnet vllm/lib/cli.libsonnet vllm/lib/parallel.libsonnet \
+  vllm/params-tests.jsonnet vllm/cli-tests.jsonnet vllm/golden-tests.jsonnet
 ```
+
+`vllm/tests/golden/legacy-render.json` 是改造前用旧 `main.jsonnet` 生成的 5 场景基线，用于确保新流程的 `cli.serve`、`cli.deployment`、`warnings` 与原命令文本完全一致。只有确认要改变命令行为时才更新该 fixture。
 
 非法输入会直接报错，例如：
 
-```powershell
-jsonnet vllm/main.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, tensorParallel: 5}'
+```bash
+jsonnet vllm/generate-params.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, tensorParallel: 5}'
 # RUNTIME ERROR: TP × PP 必须等于总卡数：5 × 2 != 2 机 × 8 卡 = 16
 ```
 
@@ -361,12 +497,14 @@ jsonnet vllm/main.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, tensorPa
 2. **1M 上下文**：默认 `maxModelLen=1048576`。实际可用长度取决于显存、`maxNumBatchedTokens`、并发和 prefix caching，建议先用小并发压测再放大。
 3. **thinking 默认开启**：官方默认 thinking=true、effort=50。如果客户端 `max_tokens` 设得太小，预算可能全部花在思考链上，表现为 `content` 为空、`finish_reason=length`。可以显式关闭 thinking 或放宽预算。
 4. **工具调用格式**：V4.1 使用 DSML 标签，解析器名为 `deepseek_v41`，与 V4 的格式不完全兼容；不要混用旧的 `deepseek_v3` 解析器。
-5. **纯文本 vs 多模态**：`--language-model-only` 会跳过视觉编码器，适合纯文本负载；需要图片输入时把 `multimodal` 设为 `true`，模板会改为 `--mm-encoder-tp-mode data`。
-6. **Docker 网络**：多机建议 `--network host`。Windows Docker Desktop 对 host 网络支持因版本而异；单机调试可设 `dockerNetworkHost: false`，模板会改用 `-p 8000:8000`。
-7. **模型路径**：示例参数使用 Linux 容器路径 `/models/DeepSeek-V4.1-Flash`。在 Windows 上请把 `modelHostPath` 改成类似 `D:/models/DeepSeek-V4.1-Flash`，并保持 `modelPath` 为容器内路径。
+5. **纯文本 vs 多模态**：`language_model_only: true` 会跳过视觉编码器，适合纯文本负载；需要图片输入时把 `multimodal` 设为 `true`，产物改为 `mm_encoder_tp_mode`。
+6. **Docker 网络**：多机建议 `network_host: true`。单机调试可设 `dockerNetworkHost: false`，阶段 2 会改用 `-p` 端口映射。
+7. **模型路径**：示例参数使用容器路径 `/models/DeepSeek-V4.1-Flash`。请把 `modelHostPath` 改成宿主机上的实际模型目录，并保持 `modelPath` 为容器内路径。
 8. **镜像与版本**：V4.1 需要专用镜像 `vllm/vllm-openai:deepseekv41-flash-0909` 与 vLLM >= 0.31.0；普通 pip 版本可能不包含 V4.1 架构支持。
 9. **跨机 TP**：对 IB / RoCE 和 NCCL 配置敏感。没有高速互联时，优先用 `parallelMode: "tp-pp"`（机内 TP、机间 PP）。
-10. **密钥**：设置 `apiKey` 后，渲染结果会包含 `--api-key`。不要把带真实密钥的输出提交到仓库。
+10. **密钥**：设置 `apiKey` 后，`serve.api_key` 会以明文写入参数产物。不要把带真实密钥的产物提交到仓库；`vllm/out/` 已被 `.gitignore` 忽略。
+11. **中间产物**：`vllm/out/*.params.json` 和 `vllm/out/*.cli.json` 都是运行产物，不需要提交；参数产物可以单独保存、审阅或交给其他工具消费。
+12. **浮点显示**：Jsonnet 的 JSON 浮点可能显示为 `0.90000000000000002`，等价于 `0.9`；阶段 2 渲染 argv 时会用 `%.10g` 格式化。
 
 ## 参考
 
