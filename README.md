@@ -30,7 +30,7 @@ jsonnet-vllm-example/
 │       │   ├── dev/params.json
 │       │   └── prod/params.json
 │       └── lib/
-└── vllm/                     # 两阶段 vLLM 参数模板
+└── vllm/                     # 两阶段 vLLM 静态模板 + 动态 INPUT
     ├── generate-params.jsonnet
     ├── render-cli.jsonnet
     ├── lib/
@@ -125,7 +125,7 @@ jsonnet-lint main.jsonnet                 # 未使用变量等 lint（需安装 
 
 ## 7. vLLM 实战示例
 
-`vllm/` 下是一个完整的两阶段参数模板：阶段 1 把场景配置生成为 vLLM 原生参数产物，阶段 2 从参数产物渲染 Docker / Ray / mp 命令。支持按卡数推导 TP / PP、按机器数生成多机命令，以及 speculative / thinking / tool calling / multimodal 等开关。完整说明见 [vllm/README.md](vllm/README.md)。
+`vllm/` 下是一个完整的两阶段实现：阶段 1 把**静态模板**与**动态 INPUT**生成为 vLLM 原生参数产物，阶段 2 从参数产物渲染 Docker / Ray / mp 命令。静态模板本身是 Jsonnet 函数或对象——高层写法调用 profile/自动化辅助函数，底层写法直接写 `vllm-params/v1` 字面量，两者可混用；动态 INPUT 是每次部署的扁平覆盖对象（`vllm/params/*.json`）。支持按卡数推导 TP / PP、按机器数生成多机命令，以及 speculative / thinking / tool calling / multimodal 等开关。完整说明见 [vllm/README.md](vllm/README.md)，核心架构与模块契约见 [vllm/ARCHITECTURE.md](vllm/ARCHITECTURE.md)。
 
 ```bash
 # 阶段 1：生成参数产物

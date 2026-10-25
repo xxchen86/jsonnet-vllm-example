@@ -1,26 +1,39 @@
-# DeepSeek-V4.1-Flash × vLLM 启动参数模板（Jsonnet，两阶段）
+# DeepSeek-V4.1-Flash × vLLM 静态模板 + 动态 INPUT（Jsonnet，两阶段）
 
-把 [vLLM 官方 recipe](https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash) 的 `vllm serve` 参数收敛成两阶段 Jsonnet 模板：
+把 [vLLM 官方 recipe](https://recipes.vllm.ai/deepseek-ai/DeepSeek-V4.1-Flash) 的 `vllm serve` 参数收敛成两阶段 Jsonnet：
 
-- **阶段 1：参数生成** —— 场景配置（机器数、卡数、功能开关）→ `vllm` 原生参数产物（`vllm-params/v1`）；
+- **阶段 1：静态模板实例化** —— 静态模板 + 动态 INPUT（机器数、卡数、功能开关）→ `vllm` 原生参数产物（`vllm-params/v1`）；
 - **阶段 2：CLI 渲染** —— 参数产物 → `argv`、shell 命令、Docker / Ray / mp 逐机命令（`vllm-cli/v1`）。
+
+阶段 1 不区分“模板”和“参数”：一个**静态模板**就是 Jsonnet 函数或对象，求值结果就是 `vllm-params/v1`。高层写法调用辅助函数（模型/硬件 profile + 自动化模块），底层写法直接写 v1 字面量；两者可以混用。
+
+- **静态模板**：可复用的 Jsonnet 函数或 v1 对象，决定“如何生成参数”；包括它引用的 profiles 与自动化模块。
+- **动态 INPUT**：每次部署传入的扁平覆盖对象（`vllm/params/*.json` 或 `--tla-code config=...`），决定“这次部署的具体值”。
 
 参数产物刻意使用 **vLLM 原生参数名**（snake_case，对应 `EngineArgs` / `vllm serve`），并按 `serve` / `deployment` / `container` 分区，方便有 vLLM 经验的开发者直接阅读和比对。
 
 > 目标镜像：`vllm/vllm-openai:deepseekv41-flash-0909`（要求 vLLM >= 0.31.0）。
 > 模型权重约 511 GB（含 196B Engram 记忆表），官方建议至少 614 GB 显存（511 GB × 1.2）。
 
+核心架构、关键模块与模块间契约（只记录不变量）见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+
 ## 目录
 
 ```text
 vllm/
-├── generate-params.jsonnet      # 阶段 1 入口：场景配置 -> 参数产物
+├── generate-params.jsonnet      # 阶段 1 入口：默认静态模板 + 动态 INPUT -> 参数产物
 ├── render-cli.jsonnet           # 阶段 2 入口：参数产物 -> CLI 产物
 ├── lib/
-│   ├── params.libsonnet         # 参数生成：默认值 / 校验 / TP-PP / 功能映射
+│   ├── launch.libsonnet         # 静态模板引擎：函数/对象求值、validate/generate
+│   ├── launch-helpers.libsonnet # 高层辅助：context/defaults/params + 六个自动化模块
+│   ├── util.libsonnet           # 通用小工具：getOr/asBool/校验错误/featureInput
 │   ├── cli.libsonnet            # CLI 渲染：schema 校验 / argv / shell / Docker / Ray / mp
 │   └── parallel.libsonnet       # TP/PP 推导、校验、每机 IP
-├── params/                      # 场景输入
+├── templates/
+│   ├── profiles/models/deepseek-v41-flash.libsonnet   # 模型事实/能力/recipe/功能默认
+│   ├── profiles/hardware/h200.libsonnet                # 硬件容量/容器默认
+│   └── deepseek-v41-flash-h200.libsonnet               # 默认静态模板（v1 同形）
+├── params/                      # 动态 INPUT 示例（schema 未变）
 │   ├── single-h200-8gpu.json
 │   ├── single-h200-8gpu-switches-off.json
 │   ├── single-gb200-4gpu.json
@@ -29,11 +42,127 @@ vllm/
 ├── params-tests.jsonnet         # 阶段 1 断言（含 validate 负例）
 ├── cli-tests.jsonnet            # 阶段 2 断言（含 validate 负例）
 ├── golden-tests.jsonnet         # 新旧 CLI 投影等价性测试
+├── launch-tests.jsonnet         # 静态模板、helper、自动化模块测试
 ├── tests/golden/legacy-render.json  # 改造前冻结的 5 场景基线
 ├── render-params.sh             # 阶段 1 文件落盘脚本
 ├── render-cli.sh                # 阶段 2 文件落盘脚本
-└── run-tests.sh                 # 三层测试 + 所有场景的两阶段渲染
+└── run-tests.sh                 # 全部测试 + 所有场景的两阶段渲染
 ```
+
+## 静态模板与动态 INPUT
+
+一个**静态模板**可以是 `function(config={}) -> 静态模板结果对象`，也可以直接是静态模板结果对象。结果对象就是 `vllm-params/v1`（额外可带引擎内部使用的 `errors`）。
+
+这里的 `config` 是**动态 INPUT**：`vllm/params/*.json` 或 `--tla-code/-tla-code-file config=...` 传入的扁平部分覆盖对象，描述一次具体部署（机器数、卡数、并行/后端、节点 IP、功能开关、模型路径、容器覆盖、逃生舱）。它不是 model/hardware profile，也不是 `vllm-params/v1` 产物；字段见下方“输入参数”。
+
+### 高层写法
+
+调用 `launch-helpers.libsonnet`，用 profile 和 `ctx.automation.*` 描述参数：
+
+```jsonnet
+function(config={})
+  local h = import '../lib/launch-helpers.libsonnet';
+  local model = import 'profiles/models/deepseek-v41-flash.libsonnet';
+  local hardware = import 'profiles/hardware/h200.libsonnet';
+  local launch = {
+    parallelMode: 'auto',
+    distributedBackend: 'ray',
+    // ... host/port/IP/端口策略
+  };
+  local ctx = h.context({ model: model, hardware: hardware, launch: launch, config: config });
+
+  h.params({
+    ctx: ctx,
+    serve:
+      {
+        model: if ctx.input.modelPath != null then ctx.input.modelPath else ctx.input.model,
+        tokenizer_mode: ctx.model.capabilities.tokenizerMode,
+        tensor_parallel_size: ctx.automation.parallel.tensorParallel,
+        pipeline_parallel_size: ctx.automation.parallel.pipelineParallel,
+        // ... 其余必填参数
+      }
+      + h.parallelServeParams(ctx)
+      + h.featuresServeParams(ctx)
+      + h.inputServeParams(ctx),
+    deployment:
+      {
+        nodes: ctx.input.nodes,
+        gpus_per_node: ctx.automation.worldSize.gpusPerNode,
+        node_ips: ctx.automation.network.nodeIps,
+        distributed_executor_backend: ctx.automation.backend.backend,
+      }
+      + h.backendPortParams(ctx),
+    container: {
+      image: ctx.input.image,
+      environment: ctx.automation.container.environment,
+      mounts: ctx.automation.container.mounts,
+      shm_size: ctx.input.dockerShmSize,
+      network_host: ctx.input.dockerNetworkHost,
+      name_prefix: ctx.input.containerNamePrefix,
+    },
+    extras: { serve_args: ctx.input.extraArgs, docker_args: ctx.input.extraDockerArgs },
+  })
+```
+
+完整默认静态模板见 `templates/deepseek-v41-flash-h200.libsonnet`。
+
+### 底层写法
+
+不调用任何辅助函数，直接写 `vllm-params/v1`：
+
+```jsonnet
+{
+  apiVersion: 'vllm-params/v1',
+  scenario: '固定 8×H200',
+  serve: {
+    model: 'deepseek-ai/DeepSeek-V4.1-Flash',
+    tensor_parallel_size: 8,
+    // ... 其余 vLLM 参数
+  },
+  deployment: { /* ... */ },
+  container: { /* ... */ },
+  extras: { serve_args: [], docker_args: [] },
+  warnings: [],
+}
+```
+
+两种写法可以混用。`vllm/out/*.params.json` 产物本身也是合法的底层静态模板，可以直接编辑后作为 `template` 传给阶段 1。
+
+底层静态模板需要自行保证 vLLM 参数名与类型；阶段 2 只渲染已知参数，未知的 `serve` 键会被忽略。高层写法通过 `cli.validate` 与默认静态模板测试保证这一点。
+
+### 辅助函数
+
+| 函数 | 作用 |
+| --- | --- |
+| `context({model, hardware, launch, config})` | 合并默认值/用户配置，运行六个自动化模块，返回 `{input, model, hardware, launch, automation, errors, warnings}` |
+| `defaults({model, hardware, launch})` | 生成扁平输入默认值 |
+| `params({ctx, serve, deployment, container, extras})` | 补 `apiVersion`/`scenario`/`warnings`/`errors` |
+| `parallelServeParams(ctx)` | `enable_expert_parallel` |
+| `featuresServeParams(ctx)` | speculative / reasoning / tool / multimodal |
+| `inputServeParams(ctx)` | api_key / max_num_seqs / enforce_eager / access log |
+| `backendPortParams(ctx)` | ray_port / master_port |
+
+这些函数都是普通 Jsonnet；不调用它们不影响引擎工作。
+
+### 自动化模块
+
+`ctx.automation.<module>` 由 `launch-helpers.context` 计算：
+
+| 模块 | 输出 |
+| --- | --- |
+| `worldSize` | `gpusPerNode`, `nodeCount`, `totalGpusErrors`, `conflictErrors` |
+| `parallel` | `tensorParallel`, `pipelineParallel`, `expertParallel`, `errors`, `warnings` |
+| `network` | `nodeIps`, `errors`, `warnings` |
+| `backend` | `backend`, `rayPort`, `masterPort`, `isRay`, `isMp`, `errors` |
+| `features` | `chatTemplateKwargs`, `speculative`, `thinking`, `toolCalling`, `multimodal`, `errors` |
+| `container` | `environment`, `mounts` |
+
+### 选择静态模板
+
+- 默认：`generate-params.jsonnet` 直接 import `templates/deepseek-v41-flash-h200.libsonnet`。
+- 其他静态模板：`--tla-code-file template=path/to/declaration.libsonnet`，可以是函数、对象或保存的 v1 产物。
+- 没有 registry / id：静态模板就是 Jsonnet 文件。
+
 
 ## 快速开始
 
@@ -67,13 +196,26 @@ jsonnet vllm/render-cli.jsonnet \
 
 脚本会 `cd` 到仓库根目录，`-c` / `-p` / `-o` 的路径都按仓库根目录解析；省略 `-o` 时输出到 stdout。
 
-也可以内联覆盖场景参数：
+也可以内联覆盖动态 INPUT：
 
 ```bash
 jsonnet vllm/generate-params.jsonnet --tla-code config='{nodes: 2, gpusPerNode: 8, speculative: true}'
 ```
 
+省略 `template` 时使用默认静态模板。切换到其他静态模板（函数、对象或保存的 v1 产物）：
+
+```bash
+jsonnet vllm/generate-params.jsonnet \
+  --tla-code-file config=vllm/params/single-h200-8gpu.json \
+  --tla-code-file template=vllm/templates/other-declaration.libsonnet \
+  > vllm/out/other.params.json
+```
+
+`render-params.sh` 只暴露 `config`，始终使用默认静态模板；需要其他静态模板时直接调用 `generate-params.jsonnet`。
+
 ## 输入参数
+
+以下字段与默认值保持不变；默认值由默认静态模板的 `launch` 策略和 model/hardware profile 提供。
 
 ### 核心字段
 
@@ -474,14 +616,20 @@ jsonnet vllm/cli-tests.jsonnet
 # 新旧 CLI 投影等价性（对比改造前冻结的 5 场景基线）
 jsonnet vllm/golden-tests.jsonnet
 
-# 三层测试 + 所有场景的两阶段渲染
+# 静态模板、helper、自动化模块
+jsonnet vllm/launch-tests.jsonnet
+
+# 全部测试 + 所有场景的两阶段渲染
 ./vllm/run-tests.sh
 
 # 格式化检查
 jsonnetfmt --test \
   vllm/generate-params.jsonnet vllm/render-cli.jsonnet \
-  vllm/lib/params.libsonnet vllm/lib/cli.libsonnet vllm/lib/parallel.libsonnet \
-  vllm/params-tests.jsonnet vllm/cli-tests.jsonnet vllm/golden-tests.jsonnet
+  vllm/lib/launch.libsonnet vllm/lib/launch-helpers.libsonnet vllm/lib/util.libsonnet \
+  vllm/lib/cli.libsonnet vllm/lib/parallel.libsonnet \
+  vllm/templates/*.libsonnet vllm/templates/profiles/models/*.libsonnet \
+  vllm/templates/profiles/hardware/*.libsonnet \
+  vllm/params-tests.jsonnet vllm/cli-tests.jsonnet vllm/golden-tests.jsonnet vllm/launch-tests.jsonnet
 
 # shell 语法检查
 bash -n vllm/render-params.sh vllm/render-cli.sh vllm/run-tests.sh
