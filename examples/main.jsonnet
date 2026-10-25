@@ -1,4 +1,4 @@
-// 基础演示：直接运行  jsonnet main.jsonnet
+// 基础演示：在仓库根目录运行  jsonnet examples/main.jsonnet
 local util = import 'lib/util.libsonnet';
 
 // 1. 本地变量 + 函数

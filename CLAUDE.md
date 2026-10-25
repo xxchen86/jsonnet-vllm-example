@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库定位
 
-这是一个 Jsonnet demo/教学/原型验证仓库，不是生产级部署工具。它用于验证 DeepSeek-V4.1-Flash 的 vLLM 启动参数「两阶段」工作流：
+这是一个以 vLLM 参数工作流为核心的 Jsonnet demo/教学/原型验证仓库，不是生产级部署工具。核心用于验证 DeepSeek-V4.1-Flash 的 vLLM 启动参数「两阶段」工作流：
 
-- 根目录、`lib/`、`examples/`：Jsonnet 语言、标准库、模块、TLA、输出格式、K8s 清单等可运行示例；根 `README.md` 是完整教程。
-- `vllm/`：把 DeepSeek-V4.1-Flash 的 vLLM 部署参数拆成「参数生成 → CLI 渲染」两阶段；字段、产物 schema 与部署说明见 `vllm/README.md`。
+- `vllm/`：仓库核心，把 DeepSeek-V4.1-Flash 的 vLLM 部署参数拆成「参数生成 → CLI 渲染」两阶段；字段、产物 schema 与部署说明见 `vllm/README.md`，架构见 `vllm/ARCHITECTURE.md`。
+- `examples/`：收束全部 Jsonnet 语言教学示例（标准库、模块、TLA、输出格式、K8s 清单等）；`examples/README.md` 是完整教程，`examples/capabilities/README.md` 是按能力拆分的示例集。根 `README.md` 是 vLLM 核心入口。
 
 运行时为 go-jsonnet v0.20.0（`jsonnet` / `jsonnetfmt`），没有构建步骤，也没有包管理器。测试脚本额外依赖 `python3`（仅用于 `json.tool` 校验产物可解析）。
 
@@ -52,8 +52,8 @@ jsonnetfmt --in-place vllm/lib/launch-helpers.libsonnet
 # shell 语法检查
 bash -n vllm/render-params.sh vllm/render-cli.sh vllm/run-tests.sh
 
-# 基础示例
-jsonnet main.jsonnet
+# Jsonnet 语言示例（全部在 examples/ 下）
+jsonnet examples/main.jsonnet
 jsonnet examples/capabilities/09-k8s.jsonnet
 ```
 
